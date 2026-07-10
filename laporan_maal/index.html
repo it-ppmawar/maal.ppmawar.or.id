@@ -356,31 +356,36 @@
 
         /* Table section */
         .table-section { padding: 16px 0 0; }
-        .table-responsive { overflow-x: auto; padding: 0 0 20px; }
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 0 20px; }
         table.trx-table {
             width: 100%;
             border-collapse: collapse;
             font-size: .83rem;
+            table-layout: fixed;
         }
         table.trx-table thead tr {
             background: linear-gradient(90deg, var(--navy) 0%, var(--navy3) 100%);
         }
         table.trx-table thead th {
             color: #fff;
-            padding: 10px 14px;
+            padding: 10px 12px;
             text-align: left;
             font-weight: 600;
             white-space: nowrap;
+            overflow: hidden;
         }
-        table.trx-table thead th:first-child { text-align: center; width: 48px; }
-        table.trx-table thead th:last-child { text-align: right; }
+        table.trx-table thead th:nth-child(1) { text-align: center; width: 42px; }
+        table.trx-table thead th:nth-child(2) { width: 100px; }
+        table.trx-table thead th:nth-child(3) { width: auto; }
+        table.trx-table thead th:nth-child(4) { text-align: right; width: 120px; }
         table.trx-table tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
         table.trx-table tbody tr:hover { background: #f8faff; }
         table.trx-table tbody tr:last-child { border-bottom: none; }
         table.trx-table td {
-            padding: 9px 14px;
+            padding: 9px 12px;
             color: var(--text);
             vertical-align: middle;
+            overflow: hidden;
         }
         table.trx-table td:first-child { text-align: center; color: var(--muted); font-size: .78rem; }
         table.trx-table td:last-child { text-align: right; font-weight: 600; color: var(--teal2); white-space: nowrap; }
@@ -388,8 +393,8 @@
             display: inline-block;
             background: #eef2f9;
             border-radius: 6px;
-            padding: 2px 8px;
-            font-size: .76rem;
+            padding: 2px 6px;
+            font-size: .74rem;
             color: var(--navy3);
             white-space: nowrap;
         }
@@ -397,10 +402,26 @@
             background: #eef2f9;
             font-weight: 700;
             color: var(--navy);
-            padding: 10px 14px;
+            padding: 10px 12px;
             border-top: 2px solid var(--navy3);
         }
         .tfoot-row td:last-child { text-align: right; color: var(--teal2); }
+
+        /* Mobile table adjustments */
+        @media (max-width: 540px) {
+            table.trx-table { font-size: .76rem; }
+            table.trx-table td, table.trx-table thead th { padding: 7px 8px; }
+            table.trx-table thead th:nth-child(1) { width: 32px; }
+            table.trx-table thead th:nth-child(2) { width: 84px; }
+            table.trx-table thead th:nth-child(4) { width: 100px; }
+            .tgl-badge { font-size: .68rem; padding: 2px 4px; }
+            table.trx-table td:nth-child(3) {
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
 
         /* Pagination */
         .pagination-wrap {
@@ -540,7 +561,8 @@
 ════════════════════════════════════════════════════════════ -->
 <script>
 // ── Config ──────────────────────────────────────────────────
-var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=39941645&single=true&output=csv';
+// Gunakan PHP proxy untuk menghindari CORS/redirect Google Sheets
+var CSV_URL = 'csv_proxy.php';
 var ROWS_PER_PAGE = 25;
 
 // ── State ────────────────────────────────────────────────────
@@ -1092,12 +1114,17 @@ function showLembaga(name) {
 function buildChartData(trx) {
     if (!trx || trx.length === 0) return { labels: [], values: [] };
 
-    // Group by bulan (mm/yyyy)
+    // Group by bulan (mm/yyyy) — skip entri tanpa tanggal valid
     var monthly = {};
+    var BULAN_ID = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     trx.forEach(function(t) {
-        var parts = t.tgl.trim().split(/[-\/]/);
+        var tglStr = (t.tgl || '').trim();
+        if (!tglStr) return; // skip jika tanggal kosong
+        var parts = tglStr.split(/[-\/]/);
         if (parts.length < 3) return;
-        var key = parts[1] + '/' + parts[2]; // mm/yyyy
+        var dd = parts[0], mm = parts[1], yyyy = parts[2];
+        if (!mm || !yyyy || isNaN(parseInt(mm)) || isNaN(parseInt(yyyy))) return;
+        var key = mm + '/' + yyyy; // mm/yyyy
         monthly[key] = (monthly[key] || 0) + t.nominal;
     });
 
@@ -1109,13 +1136,18 @@ function buildChartData(trx) {
         return da - db;
     });
 
-    // Kumulatif
+    if (keys.length === 0) return { labels: [], values: [] };
+
+    // Kumulatif — label: "Jan 2026"
     var labels = [];
     var values = [];
     var running = 0;
     keys.forEach(function(k) {
         running += monthly[k];
-        labels.push(k);
+        var pa = k.split('/');
+        var mmNum = parseInt(pa[0]);
+        var labelStr = (BULAN_ID[mmNum] || pa[0]) + ' ' + pa[1];
+        labels.push(labelStr);
         values.push(running);
     });
 
