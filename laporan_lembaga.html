@@ -719,90 +719,120 @@ function fetchCSV() {
 // ── Parse from PapaParse rows directly ──────────────────────
 function parseCSVDirect(rows) {
     var result = {};
-    var currentLembaga = null;
-    var inTransaksi = false;
-
-    for (var i = 0; i < rows.length; i++) {
-        var cols = rows[i];
-        if (!cols || cols.length < 2) continue;
-
-        var col0 = String(cols[0] || '').trim();
-        var col1 = String(cols[1] || '').trim();
-        var col2 = String(cols[2] || '').trim();
-        var col3 = String(cols[3] || '').trim();
-
-        // ── Deteksi blok lembaga baru ────────────────────────
-        // Pola: col0 = nama lembaga, col1 = 'NO'
-        if (col0 !== '' && col1.toUpperCase() === 'NO') {
-            currentLembaga = col0.toUpperCase().trim();
-            if (!result[currentLembaga]) {
-                result[currentLembaga] = { total: 0, bulan: '', transaksi: [] };
-            }
-            inTransaksi = false;
-            continue;
+    
+    // 1. Baca Header Utama (Baris ke 1 s/d 3 di file CSV)
+    var headerLembagaRow = null;
+    var headerTotalRow = null;
+    var headerBulanRow = null;
+    
+    var checkLines = Math.min(15, rows.length);
+    for (var i = 0; i < checkLines; i++) {
+        var row = rows[i];
+        if (!row || row.length < 2) continue;
+        var label = String(row[1] || '').trim().toUpperCase();
+        if (label === 'NAMA LEMBAGA') {
+            headerLembagaRow = row;
+        } else if (label === 'NOMINAL') {
+            headerTotalRow = row;
+        } else if (label === 'BULAN') {
+            headerBulanRow = row;
         }
-
-        if (!currentLembaga) continue;
-
-        // ── BULAN ────────────────────────────────────────────
-        if (col1.toUpperCase() === 'BULAN' || (col0 === '' && col1.toUpperCase() === 'BULAN')) {
-            if (col2 && col2 !== '' && !result[currentLembaga].bulan) {
-                result[currentLembaga].bulan = col2;
-            }
-            continue;
-        }
-
-        // ── NOMINAL (total ringkasan lembaga) ────────────────
-        if (col1.toUpperCase() === 'NOMINAL' || (col0 === '' && col1.toUpperCase() === 'NOMINAL')) {
-            if (col2 && result[currentLembaga].total === 0) {
-                result[currentLembaga].total = cleanNumber(col2);
-            }
-            continue;
-        }
-
-        // ── TOTAL WAKAF (akhir blok) ─────────────────────────
-        if (col1.toUpperCase().indexOf('TOTAL') !== -1 && col1.toUpperCase().indexOf('WAKAF') !== -1) {
-            inTransaksi = false;
-            continue;
-        }
-
-        // ── Baris total angka (col0='', col1=number, setelah total wakaf)
-        if (col0 === '' && col1 !== '' && /^[\d,.]+$/.test(col1) && result[currentLembaga].total === 0) {
-            result[currentLembaga].total = cleanNumber(col1);
-            continue;
-        }
-
-        // ── Header transaksi ─────────────────────────────────
-        if (col1.toUpperCase() === 'TANGGAL') {
-            inTransaksi = true;
-            continue;
-        }
-
-        // ── Data transaksi ───────────────────────────────────
-        if (inTransaksi) {
-            var tgl = col1;
-            var namaWakif = col2;
-            var nominalTrx = cleanNumber(col3);
-
-            // Tanggal harus berbentuk dd-mm-yyyy atau dd/mm/yyyy
-            if (tgl.match(/\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/) && nominalTrx > 0) {
-                result[currentLembaga].transaksi.push({
-                    no: col0 || '',
-                    tgl: tgl,
-                    nama: namaWakif,
-                    nominal: nominalTrx
-                });
+    }
+    
+    // Inisialisasi awal list lembaga dari header global
+    if (headerLembagaRow) {
+        for (var col = 2; col < headerLembagaRow.length; col++) {
+            var name = String(headerLembagaRow[col] || '').trim().toUpperCase();
+            if (name !== '' && name !== 'NAMA LEMBAGA') {
+                var totalVal = headerTotalRow ? cleanNumber(headerTotalRow[col]) : 0;
+                var bulanVal = headerBulanRow ? String(headerBulanRow[col]).trim() : '';
+                result[name] = {
+                    total: totalVal,
+                    bulan: bulanVal,
+                    transaksi: []
+                };
             }
         }
     }
-
-    // Hitung total dari transaksi jika total masih 0
+    
+    // 2. Baca Blok Transaksi Horizontal
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        if (!row || row.length < 2) continue;
+        
+        var col0 = String(row[0] || '').trim().toUpperCase();
+        var col1 = String(row[1] || '').trim().toUpperCase();
+        
+        // Deteksi baris pertama dari blok lembaga, contoh: ['ALUMNI MAWAR', 'NO', '1', '2', '3', ...]
+        if (col0 !== '' && col1 === 'NO') {
+            var name = col0;
+            
+            var rowNo = row;
+            var rowTgl = null;
+            var rowNama = null;
+            var rowNominal = null;
+            var rowTotalWakaf = null;
+            
+            // Cari baris TANGGAL, NAMA, dan NOMINAL di bawahnya
+            for (var offset = 1; offset <= 6; offset++) {
+                if (i + offset >= rows.length) break;
+                var nextRow = rows[i + offset];
+                var subLabel = String(nextRow[1] || '').trim().toUpperCase();
+                
+                if (subLabel === 'TANGGAL') {
+                    rowTgl = nextRow;
+                } else if (subLabel === 'NAMA') {
+                    rowNama = nextRow;
+                } else if (subLabel === 'NOMINAL') {
+                    rowNominal = nextRow;
+                } else if (subLabel === 'TOTAL WAKAF') {
+                    rowTotalWakaf = rows[i + offset + 1];
+                }
+            }
+            
+            // Jika struktur baris horizontal lengkap, zip kolom-kolomnya menjadi list transaksi
+            if (rowNo && rowTgl && rowNama && rowNominal) {
+                if (!result[name]) {
+                    result[name] = { total: 0, bulan: '', transaksi: [] };
+                }
+                
+                var maxCols = Math.max(rowNo.length, rowTgl.length, rowNama.length, rowNominal.length);
+                for (var colIdx = 2; colIdx < maxCols; colIdx++) {
+                    var trxNo = String(rowNo[colIdx] || '').trim();
+                    var trgTgl = String(rowTgl[colIdx] || '').trim();
+                    var trxNama = String(rowNama[colIdx] || '').trim();
+                    var trxNominal = cleanNumber(rowNominal[colIdx] || '0');
+                    
+                    if (trgTgl && trxNominal > 0) {
+                        result[name].transaksi.push({
+                            no: trxNo,
+                            tgl: trgTgl,
+                            nama: trxNama,
+                            nominal: trxNominal
+                        });
+                    }
+                }
+            }
+            
+            // Update total jika ditemukan baris total wakaf yang valid
+            if (rowTotalWakaf && result[name]) {
+                var totalVal = cleanNumber(rowTotalWakaf[1] || '0');
+                if (totalVal > 0) {
+                    result[name].total = totalVal;
+                }
+            }
+            
+            i += 4; 
+        }
+    }
+    
+    // Fallback: hitung ulang total nominal jika total masih 0 tapi ada transaksi
     Object.keys(result).forEach(function(k) {
         if (result[k].total === 0 && result[k].transaksi.length > 0) {
             result[k].total = result[k].transaksi.reduce(function(s, t) { return s + t.nominal; }, 0);
         }
     });
-
+    
     return result;
 }
 
