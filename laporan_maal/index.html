@@ -741,52 +741,101 @@ function splitCSVLine(line) {
 }
 
 // ── Fetch CSV ───────────────────────────────────────────────
+var DIRECT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=39941645&single=true&output=csv';
+
+function onCSVLoaded(csvText, source) {
+    var strip = document.getElementById('loading-strip');
+    strip.style.display = 'none';
+    console.log('[CSV:' + source + '] panjang:', csvText.length);
+    // Jika content terlihat seperti HTML (error page), tolak
+    if (csvText.trimStart().startsWith('<')) {
+        throw new Error('Bukan CSV, mungkin error page HTML');
+    }
+    ALL_DATA = parseCSVText(csvText);
+    var keys = Object.keys(ALL_DATA);
+    console.log('[CSV:' + source + '] Lembaga:', keys.length, keys);
+    LEMBAGA_LIST = keys.sort();
+    csvLoaded = true;
+    var q = document.getElementById('search-input').value.trim();
+    if (q.length >= 2) doSearch(q);
+}
+
+function fetchViaProxy() {
+    return fetch(CSV_URL)
+        .then(function(res) {
+            if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+            return res.text();
+        })
+        .then(function(csvText) {
+            onCSVLoaded(csvText, 'proxy');
+        });
+}
+
+function fetchDirect() {
+    return fetch(DIRECT_CSV_URL)
+        .then(function(res) {
+            if (!res.ok) throw new Error('Direct HTTP ' + res.status);
+            return res.text();
+        })
+        .then(function(csvText) {
+            onCSVLoaded(csvText, 'direct');
+        });
+}
+
+function fetchViaPapaParse(url, label) {
+    return new Promise(function(resolve, reject) {
+        Papa.parse(url, {
+            download: true,
+            skipEmptyLines: false,
+            complete: function(results) {
+                console.log('[PapaParse:' + label + '] rows:', results.data.length);
+                var strip = document.getElementById('loading-strip');
+                strip.style.display = 'none';
+                ALL_DATA = parseCSVDirect(results.data);
+                var keys = Object.keys(ALL_DATA);
+                console.log('[PapaParse:' + label + '] Lembaga:', keys.length, keys);
+                LEMBAGA_LIST = keys.sort();
+                csvLoaded = true;
+                var q = document.getElementById('search-input').value.trim();
+                if (q.length >= 2) doSearch(q);
+                resolve();
+            },
+            error: function(err) { reject(err); }
+        });
+    });
+}
+
+function showLoadError() {
+    var strip = document.getElementById('loading-strip');
+    strip.style.display = 'block';
+    strip.style.color = '#f8b4b4';
+    strip.innerHTML = '<i class="bx bx-error-circle"></i> Gagal memuat data. Coba muat ulang halaman.';
+}
+
 function fetchCSV() {
     var strip = document.getElementById('loading-strip');
     strip.style.display = 'block';
 
-    // Coba fetch manual dulu (lebih reliable untuk file besar)
-    fetch(CSV_URL)
-        .then(function(res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.text();
+    // Coba 1: PHP proxy (hindari CORS/redirect Google Sheets)
+    fetchViaProxy()
+        .catch(function(err1) {
+            console.warn('[CSV] Proxy gagal:', err1.message, '— coba direct fetch...');
+            // Coba 2: fetch langsung ke Google Sheets
+            return fetchDirect();
         })
-        .then(function(csvText) {
-            strip.style.display = 'none';
-            console.log('[CSV] Berhasil fetch, panjang:', csvText.length);
-            ALL_DATA = parseCSVText(csvText);
-            var keys = Object.keys(ALL_DATA);
-            console.log('[CSV] Lembaga ditemukan:', keys.length, keys);
-            LEMBAGA_LIST = keys.sort();
-            csvLoaded = true;
-            var q = document.getElementById('search-input').value.trim();
-            if (q.length >= 2) doSearch(q);
+        .catch(function(err2) {
+            console.warn('[CSV] Direct gagal:', err2.message, '— coba PapaParse proxy...');
+            // Coba 3: PapaParse via proxy
+            return fetchViaPapaParse(CSV_URL, 'proxy');
         })
-        .catch(function(err) {
-            console.warn('[CSV] fetch gagal, fallback ke PapaParse:', err);
-            // Fallback ke PapaParse
-            Papa.parse(CSV_URL, {
-                download: true,
-                skipEmptyLines: false,
-                complete: function(results) {
-                    strip.style.display = 'none';
-                    console.log('[PapaParse] rows:', results.data.length);
-                    ALL_DATA = parseCSVDirect(results.data);
-                    var keys = Object.keys(ALL_DATA);
-                    console.log('[PapaParse] Lembaga:', keys.length, keys);
-                    LEMBAGA_LIST = keys.sort();
-                    csvLoaded = true;
-                    var q = document.getElementById('search-input').value.trim();
-                    if (q.length >= 2) doSearch(q);
-                },
-                error: function(err2) {
-                    strip.style.display = 'none';
-                    strip.style.color = '#f8b4b4';
-                    strip.textContent = 'Gagal memuat data. Coba muat ulang halaman.';
-                    strip.style.display = 'block';
-                    console.error('[PapaParse] error:', err2);
-                }
-            });
+        .catch(function(err3) {
+            console.warn('[CSV] PapaParse proxy gagal:', err3.message, '— coba PapaParse direct...');
+            // Coba 4: PapaParse langsung
+            return fetchViaPapaParse(DIRECT_CSV_URL, 'direct');
+        })
+        .catch(function(err4) {
+            console.error('[CSV] Semua metode gagal:', err4);
+            showLoadError();
         });
 }
 
