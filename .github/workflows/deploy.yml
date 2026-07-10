@@ -23,7 +23,7 @@ jobs:
           # Upload all files from root
           local-dir: ./
           # Path target untuk web utama di cPanel
-          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+          server-dir: public_html/maal/
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
           exclude: |
             **/.git*
