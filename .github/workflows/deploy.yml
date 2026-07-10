@@ -23,9 +23,7 @@ jobs:
           # Upload all files from root
           local-dir: ./
           # Path target untuk web utama di cPanel
-          server-dir: ""
-          # Force re-upload semua file
-          dangerous-clean-slate: true
+          server-dir: public_html/maal/
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
           exclude: |
             **/.git*
@@ -57,6 +55,8 @@ jobs:
           local-dir: ./laporan_maal/
           # Path target untuk subdomain laporan.maal di cPanel
           server-dir: ${{ secrets.FTP_SUBDOMAIN_TARGET_DIR }}
+          # Force re-upload subdomain files setiap push
+          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
