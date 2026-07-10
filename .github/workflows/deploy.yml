@@ -24,6 +24,8 @@ jobs:
           local-dir: ./
           # Path target untuk web utama di cPanel
           server-dir: public_html/maal/
+          # Force re-upload semua file
+          dangerous-clean-slate: true
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
           exclude: |
             **/.git*
