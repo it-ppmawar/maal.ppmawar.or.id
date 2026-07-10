@@ -23,7 +23,7 @@ jobs:
           # Upload all files from root
           local-dir: ./
           # Path target untuk web utama di cPanel
-          server-dir: public_html/maal/
+          server-dir: ""
           # Force re-upload semua file
           dangerous-clean-slate: true
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
