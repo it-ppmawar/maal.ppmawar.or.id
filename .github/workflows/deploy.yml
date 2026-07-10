@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           # Upload all files from root
           local-dir: ./
-          # Path target untuk web utama di cPanel
+          # Path target BENAR untuk web utama (konfirmasi dari PHP error log)
           server-dir: public_html/maal/
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
           exclude: |
@@ -53,9 +53,9 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           # Hanya upload isi dari folder laporan_maal
           local-dir: ./laporan_maal/
-          # Path target untuk subdomain laporan.maal di cPanel
-          server-dir: ${{ secrets.FTP_SUBDOMAIN_TARGET_DIR }}
-          # Force re-upload subdomain files setiap push
+          # Path BENAR subdomain (konfirmasi dari cPanel File Manager)
+          server-dir: laporan.maal.ppmawar.or.id/
+          # Force re-upload setiap push
           dangerous-clean-slate: true
           exclude: |
             **/.git*
