@@ -55,6 +55,8 @@ jobs:
           local-dir: ./laporan_maal/
           # Path target untuk subdomain laporan.maal di cPanel
           server-dir: ${{ secrets.FTP_SUBDOMAIN_TARGET_DIR }}
+          # Force re-upload semua file (reset sync state cache)
+          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
