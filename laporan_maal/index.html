@@ -453,6 +453,11 @@
             .stat-item { min-width: 100px; }
             .search-card { padding: 20px 16px 18px; }
         }
+        @media (max-width: 480px) {
+            .hide-mobile { display: none; }
+            .top-bar-inner { padding: 0 12px; gap: 8px; }
+            .brand { font-size: 1.05rem; }
+        }
     </style>
 </head>
 <body>
@@ -462,7 +467,7 @@
     <div class="top-bar-inner">
         <a href="https://maal.ppmawar.or.id" class="brand">MAAL <span>KSPPS MAWAR</span></a>
         <a href="https://maal.ppmawar.or.id" class="back-link">
-            <i class='bx bx-arrow-back'></i> Kembali ke Beranda
+            <i class='bx bx-arrow-back'></i> Kembali<span class="hide-mobile"> ke Beranda</span>
         </a>
     </div>
 </nav>
