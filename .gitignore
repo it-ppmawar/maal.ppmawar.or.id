@@ -1,0 +1,24 @@
+# Ignore zip archives
+*.zip
+
+# Ignore SQL database dumps
+*.sql
+
+# Ignore log files and error logs
+*.log
+error_log
+
+# Ignore Excel files (contains raw offline data)
+*.xlsx
+
+# Ignore temporary and cache files
+temp.txt
+cache_rat.json
+test.csv
+test2024.csv
+
+# Ignore IDE files
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini

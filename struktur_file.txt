@@ -1,0 +1,157 @@
+├── .well-known/
+│   ├── acme-challenge/
+│   │   └── 
+│   └── pki-validation/
+│       └── 
+├── app/
+│   ├── controllers/
+│   │   ├── Home.php
+│   │   └── Page.php
+│   ├── core/
+│   │   ├── App.php
+│   │   ├── Config.php
+│   │   ├── Controller.php
+│   │   └── Database.php
+│   ├── models
+│   │   └── mPublic.php
+│   ├── views
+│   │   ├── admin/
+│   │   │   ├── js_aset.php 
+│   │   │   ├── js_polis.php
+│   │   │   ├── js_toko.php
+│   │   │   ├── js_uang.php
+│   │   │   ├── v_aset.php
+│   │   │   ├── v_home.php
+│   │   │   ├── v_polis.php
+│   │   │   ├── v_toko.php
+│   │   │   └── v_uang.php
+│   │   ├── public/
+│   │   │   ├── js_aset.php 
+│   │   │   ├── js_polis.php
+│   │   │   ├── js_toko.php
+│   │   │   ├── js_uang.php
+│   │   │   ├── v_aset.php
+│   │   │   ├── v_home.php
+│   │   │   ├── v_perkembangan.php
+│   │   │   ├── v_polis.php
+│   │   │   ├── v_toko.php
+│   │   │   └── v_uang.php
+│   │   └── template/
+│   │       ├── all.php
+│   │       ├── p_footer.php
+│   │       └── p_head.php
+│   ├── .htaccess
+│   └── init.php
+├── cgi-bn/
+│   └── 
+├── public/
+│   ├── arsha/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── img/
+│   │   │   └── logo.png
+│   │   ├── js/
+│   │   │   └── main.js
+│   │   └── vendor/
+│   │       ├── aos/
+│   │       │   ├── aos.css
+│   │       │   └── aos.js
+│   │       ├── boostrap/
+│   │       │   ├── css/
+│   │       │   │   ├── bootstrap-grid.css
+│   │       │   │   ├── bootstrap-grid.css.map
+│   │       │   │   ├── bootstrap-grid.min.css
+│   │       │   │   ├── bootstrap-grid.min.css.map
+│   │       │   │   ├── bootstrap-reboot.css
+│   │       │   │   ├── bootstrap-reboot.css.map
+│   │       │   │   ├── bootstrap-reboot.min.css
+│   │       │   │   ├── bootstrap-reboot.min.css.map
+│   │       │   │   ├── bootstrap.css
+│   │       │   │   ├── bootstrap.css.map
+│   │       │   │   ├── bootstrap.min.css
+│   │       │   │   └── bootstrap.min.css.map
+│   │       │   └── js/
+│   │       │       ├── bootstrap.bundle.js
+│   │       │       ├── bootstrap.bundle.js.map
+│   │       │       ├── bootstrap.bundle.min.js
+│   │       │       ├── bootstrap.bundle.min.js.map
+│   │       │       ├── bootstrap.js
+│   │       │       ├── bootstrap.js.map
+│   │       │       ├── bootstrap.min.js
+│   │       │       ├── bootstrap.min.js.map
+│   │       │       └── 
+│   │       ├── boxicons/
+│   │       │   ├── css/
+│   │       │   │   ├── animations.css
+│   │       │   │   ├── boxicons.css
+│   │       │   │   ├── boxicons.min.css
+│   │       │   │   └── transformations.css
+│   │       │   └── fonts/
+│   │       │       ├── boxicons.eot
+│   │       │       ├── boxicons.svg
+│   │       │       ├── boxicons.ttf
+│   │       │       ├── boxicons.woff
+│   │       │       └── boxicons.woff2
+│   │       ├── icofont/
+│   │       │       ├── fonts/
+│   │       │       │   ├── icofont.woff    
+│   │       │       │   └── icofont.woff2
+│   │       │       └── icofont.min.css
+│   │       ├── isotope-layout/
+│   │       │       ├── isotope.pkgd.js
+│   │       │       └── isotope.pkgd.min.js
+│   │       ├── jquery/
+│   │       │       ├── jquery.min.js
+│   │       │       └── jquery.min.map
+│   │       ├── jquery.easing/
+│   │       │       └── jquery.easing.min.js
+│   │       ├── owl.carousel/
+│   │       │       ├── assets/
+│   │       │       │   ├── ajax-loader.gif
+│   │       │       │   ├── owl.carousel.css
+│   │       │       │   ├── owl.carousel.min.css
+│   │       │       │   ├── owl.theme.default.css
+│   │       │       │   ├── owl.theme.default.min.css
+│   │       │       │   ├── owl.theme.green.css
+│   │       │       │   ├── owl.theme.green.min.css
+│   │       │       │   └── owl.video.play.png
+│   │       │       ├── LICENSE
+│   │       │       ├── owl.carousel.js
+│   │       │       ├── owl.carousel.min.js
+│   │       │       └── README.md
+│   │       ├── php-email-form/
+│   │       │       └── validate.js
+│   │       ├── remixicon/
+│   │       │   ├── remixicon.css
+│   │       │   ├── remixicon.eot
+│   │       │   ├── remixicon.less
+│   │       │   ├── remixicon.svg
+│   │       │   ├── remixicon.symbol.svg
+│   │       │   ├── remixicon.ttf
+│   │       │   ├── remixicon.woff
+│   │       │   └── remixicon.woff2
+│   │       ├── venobox/
+│   │       │   ├── venobox.css
+│   │       │   ├── venobox.js
+│   │       │   ├── venobox.min.css
+│   │       │   └── venobox.min.js
+│   │       └── waypoints/
+│   │           └── jquery.waypoints.min.js
+│   ├── css/
+│   │   └── 
+│   ├── file/
+│   │   ├── 1 Windu WU Kopma 2017-2024.pdf
+│   │   ├── Laporan WU KOPMA 2023.pdf
+│   │   ├── Laporan WU KOPMA 2024.pdf
+│   │   └── Laporan WU KOPMA-FM 2023.pdf
+│   ├── img/
+│   │   └── 
+│   ├── js/
+│   │   └── chart-bar.js
+│   └── LPJ RAT 2021.pdf
+├── .htaccess
+├── index.php
+├── maal.zip
+├── struktur_file.txt
+├── test_koneksi.php
+└── wakaf_uang_detail.php

@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Penerimaan Wakaf Uang per Lembaga – MAAL KSPPS MAWAR</title>
+    <meta name="description" content="Laporan detail penerimaan dan perkembangan wakaf uang per lembaga aktif KSPPS MAWAR Karanggeneng">
+    <meta name="robots" content="noindex, nofollow">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        /* ══ Root Variables ══════════════════════════════════════ */
+        :root {
+            --navy:   #1a2d4f;
+            --navy2:  #243a63;
+            --navy3:  #37517e;
+            --teal:   #2a9d8f;
+            --teal2:  #21867a;
+            --gold:   #e9c46a;
+            --gold2:  #f4a261;
+            --light:  #f0f4fb;
+            --white:  #ffffff;
+            --border: #dde4ef;
+            --text:   #2d3748;
+            --muted:  #718096;
+            --danger: #e74c3c;
+            --success:#27ae60;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--light);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ══ Top Bar ══════════════════════════════════════════════ */
+        .top-bar {
+            background: var(--navy);
+            padding: 14px 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 3px 20px rgba(26,45,79,.35);
+        }
+        .top-bar-inner {
+            max-width: 1000px;
+            margin: auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .brand {
+            font-family: 'Playfair Display', serif;
+            color: #fff;
+            font-size: 1.15rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .brand span { color: var(--gold); }
+        .back-link {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: .82rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: opacity .2s;
+            white-space: nowrap;
+        }
+        .back-link:hover { opacity: .75; }
+
+        /* ══ Hero / Intro ═════════════════════════════════════════ */
+        .hero {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy3) 60%, #2a6496 100%);
+            padding: 52px 20px 44px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 70% 30%, rgba(233,196,106,.12) 0%, transparent 60%);
+        }
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            color: #fff;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        .hero-sub {
+            font-size: .88rem;
+            color: rgba(255,255,255,.75);
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        /* ══ Search Card ═══════════════════════════════════════════ */
+        .search-card {
+            background: rgba(255,255,255,.08);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 18px;
+            padding: 28px 28px 24px;
+            max-width: 560px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .search-label {
+            color: rgba(255,255,255,.85);
+            font-size: .82rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            letter-spacing: .4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .search-label i { color: var(--gold); font-size: 1rem; }
+
+        .search-input-wrap {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 13px 50px 13px 46px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,.25);
+            background: rgba(255,255,255,.95);
+            font-family: 'Poppins', sans-serif;
+            font-size: .92rem;
+            color: var(--navy);
+            outline: none;
+            transition: border-color .25s, box-shadow .25s;
+        }
+        .search-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(233,196,106,.25);
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--navy3);
+            font-size: 1.15rem;
+        }
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 1.1rem;
+            display: none;
+            padding: 4px;
+            border-radius: 50%;
+            transition: color .2s;
+        }
+        .search-clear:hover { color: var(--danger); }
+
+        /* Autocomplete */
+        .autocomplete-list {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(26,45,79,.18);
+            display: none;
+        }
+        .autocomplete-item {
+            padding: 10px 16px;
+            font-size: .85rem;
+            color: var(--navy);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover, .autocomplete-item.active { background: #eef2f9; }
+        .autocomplete-item i { color: var(--teal); font-size: .95rem; flex-shrink: 0; }
+        .autocomplete-item em {
+            font-style: normal;
+            background: rgba(233,196,106,.5);
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        /* Privacy note */
+        .privacy-note {
+            margin-top: 14px;
+            font-size: .76rem;
+            color: rgba(255,255,255,.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .privacy-note i { color: var(--gold); font-size: .9rem; }
+
+        /* Loading indicator */
+        .loading-strip {
+            text-align: center;
+            padding: 10px;
+            font-size: .8rem;
+            color: rgba(255,255,255,.7);
+            display: none;
+        }
+        .loading-strip i { animation: spin .8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ══ Main Content ═══════════════════════════════════════════ */
+        .main-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 28px 20px 60px;
+        }
+
+        /* ══ Empty State ════════════════════════════════════════════ */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 16px;
+        }
+        .empty-title {
+            font-size: 1.05rem;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .empty-sub { font-size: .85rem; color: #aab; }
+
+        /* ══ Lembaga Card ═══════════════════════════════════════════ */
+        .lembaga-card {
+            background: #fff;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(26,45,79,.08);
+            overflow: hidden;
+            animation: slideUp .35s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Header */
+        .card-header-lembaga {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy3) 100%);
+            padding: 22px 28px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .card-icon {
+            width: 56px; height: 56px;
+            border-radius: 14px;
+            background: rgba(233,196,106,.2);
+            border: 1.5px solid rgba(233,196,106,.4);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .card-icon i { font-size: 1.6rem; color: var(--gold); }
+        .card-meta { flex: 1; min-width: 0; }
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            color: #fff;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .card-sub { font-size: .8rem; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .badge-bulan {
+            background: rgba(233,196,106,.25);
+            border: 1px solid rgba(233,196,106,.4);
+            color: var(--gold);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: .74rem;
+            font-weight: 600;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-item {
+            flex: 1;
+            min-width: 140px;
+            padding: 16px 24px;
+            border-right: 1px solid var(--border);
+            text-align: center;
+        }
+        .stat-item:last-child { border-right: none; }
+        .stat-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+        .stat-value { font-size: 1.15rem; font-weight: 700; color: var(--navy); }
+        .stat-value.green { color: var(--teal); }
+        .stat-value.gold  { color: #c77f00; }
+
+        /* Chart section */
+        .section-title {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--navy3);
+            padding: 16px 24px 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+        .section-title i { color: var(--teal); font-size: 1rem; }
+        .chart-wrap {
+            padding: 12px 20px 20px;
+            height: 280px;
+        }
+        .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+        /* Divider */
+        .divider { border: none; border-top: 1px dashed var(--border); margin: 0 24px; }
+
+        /* Table section */
+        .table-section { padding: 16px 0 0; }
+        .table-responsive { overflow-x: auto; padding: 0 0 20px; }
+        table.trx-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .83rem;
+        }
+        table.trx-table thead tr {
+            background: linear-gradient(90deg, var(--navy) 0%, var(--navy3) 100%);
+        }
+        table.trx-table thead th {
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        table.trx-table thead th:first-child { text-align: center; width: 48px; }
+        table.trx-table thead th:last-child { text-align: right; }
+        table.trx-table tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+        table.trx-table tbody tr:hover { background: #f8faff; }
+        table.trx-table tbody tr:last-child { border-bottom: none; }
+        table.trx-table td {
+            padding: 9px 14px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+        table.trx-table td:first-child { text-align: center; color: var(--muted); font-size: .78rem; }
+        table.trx-table td:last-child { text-align: right; font-weight: 600; color: var(--teal2); white-space: nowrap; }
+        .tgl-badge {
+            display: inline-block;
+            background: #eef2f9;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: .76rem;
+            color: var(--navy3);
+            white-space: nowrap;
+        }
+        .tfoot-row td {
+            background: #eef2f9;
+            font-weight: 700;
+            color: var(--navy);
+            padding: 10px 14px;
+            border-top: 2px solid var(--navy3);
+        }
+        .tfoot-row td:last-child { text-align: right; color: var(--teal2); }
+
+        /* Pagination */
+        .pagination-wrap {
+            padding: 12px 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .pg-info { font-size: .8rem; color: var(--muted); }
+        .pg-btns { display: flex; gap: 6px; align-items: center; }
+        .pg-btn {
+            padding: 5px 12px;
+            border-radius: 7px;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            color: var(--navy);
+            font-size: .8rem;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .pg-btn:hover:not(:disabled) { background: var(--navy); color: #fff; border-color: var(--navy); }
+        .pg-btn:disabled { opacity: .4; cursor: default; }
+        .pg-btn.active { background: var(--navy3); color: #fff; border-color: var(--navy3); }
+
+        /* Not found message */
+        .not-found-msg {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+            display: none;
+        }
+        .not-found-msg i { font-size: 2.5rem; color: var(--border); display: block; margin-bottom: 10px; }
+
+        /* ══ Footer ════════════════════════════════════════════════ */
+        .page-footer {
+            background: var(--navy);
+            color: rgba(255,255,255,.5);
+            text-align: center;
+            font-size: .78rem;
+            padding: 20px;
+        }
+        .page-footer strong { color: var(--gold); }
+
+        /* ══ Responsive ════════════════════════════════════════════ */
+        @media (max-width: 600px) {
+            .card-header-lembaga { flex-direction: column; text-align: center; }
+            .stat-item { min-width: 100px; }
+            .search-card { padding: 20px 16px 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────── -->
+<nav class="top-bar">
+    <div class="top-bar-inner">
+        <a href="https://maal.ppmawar.or.id" class="brand">MAAL <span>KSPPS MAWAR</span></a>
+        <a href="https://maal.ppmawar.or.id" class="back-link">
+            <i class='bx bx-arrow-back'></i> Kembali ke Beranda
+        </a>
+    </div>
+</nav>
+
+<!-- ── Hero + Search ──────────────────────────────────────── -->
+<section class="hero">
+    <h1 class="hero-title">Laporan Penerimaan Wakaf Uang</h1>
+    <p class="hero-sub">Detail penerimaan & perkembangan per lembaga aktif · KSPPS MAWAR Karanggeneng</p>
+
+    <div class="search-card">
+        <div class="search-label"><i class='bx bx-buildings'></i> Masukkan nama lembaga untuk melihat laporan</div>
+        <div class="search-input-wrap" id="search-wrap">
+            <i class='bx bx-search search-icon'></i>
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Contoh: Bani Qoffal, IKAPETE, Bani Miraza..."
+                autocomplete="off"
+                spellcheck="false"
+            >
+            <button class="search-clear" id="btn-clear" title="Hapus pencarian">
+                <i class='bx bx-x'></i>
+            </button>
+            <div class="autocomplete-list" id="autocomplete-list"></div>
+        </div>
+        <div class="loading-strip" id="loading-strip">
+            <i class='bx bx-loader-alt'></i> Memuat data dari Google Sheets...
+        </div>
+        <div class="privacy-note">
+            <i class='bx bx-shield-quarter'></i>
+            Data bersifat privat — hanya tampil setelah nama lembaga dimasukkan
+        </div>
+    </div>
+</section>
+
+<!-- ── Main Content ────────────────────────────────────────── -->
+<main class="main-content" id="main-content">
+
+    <!-- Empty State (default) -->
+    <div class="empty-state" id="empty-state">
+        <div class="empty-icon"><i class='bx bx-search-alt-2'></i></div>
+        <div class="empty-title">Data belum ditampilkan</div>
+        <div class="empty-sub">Ketik nama lembaga di kolom pencarian di atas untuk melihat laporan detail</div>
+    </div>
+
+    <!-- Not found -->
+    <div class="not-found-msg" id="not-found">
+        <i class='bx bx-error-circle'></i>
+        Lembaga tidak ditemukan. Coba kata kunci lain.
+    </div>
+
+    <!-- Result area -->
+    <div id="result-area" style="display:none;"></div>
+
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer class="page-footer">
+    &copy; <strong>MAAL KSPPS MAWAR</strong> Karanggeneng &mdash; Laporan Penerimaan Wakaf Uang per Lembaga
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════ -->
+<script>
+// ── Config ──────────────────────────────────────────────────
+var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=39941645&single=true&output=csv';
+var ROWS_PER_PAGE = 25;
+
+// ── State ────────────────────────────────────────────────────
+var ALL_DATA     = {};   // { namaLembaga: { total, bulan, transaksi:[] } }
+var LEMBAGA_LIST = [];   // sorted list of lembaga names
+var csvLoaded    = false;
+var currentChart = null;
+var currentPage  = 1;
+var currentData  = null; // currently displayed lembaga data
+var currentName  = '';
+
+// ── Format helpers ─────────────────────────────────────────
+function formatRp(val) {
+    val = parseFloat(val) || 0;
+    if (val >= 1e9) return 'Rp\u00a0' + (val/1e9).toFixed(3).replace('.',',') + '\u00a0M';
+    if (val >= 1e6) return 'Rp\u00a0' + (val/1e6).toFixed(3).replace('.',',') + '\u00a0Jt';
+    return 'Rp\u00a0' + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function formatRpFull(val) {
+    val = parseFloat(val) || 0;
+    return 'Rp ' + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function cleanNumber(str) {
+    if (!str) return 0;
+    return parseFloat(String(str).replace(/[^\d.]/g, '')) || 0;
+}
+function fmtTgl(str) {
+    if (!str) return '-';
+    // format: dd-mm-yyyy → dd/mm/yyyy
+    var parts = str.trim().split(/[-\/]/);
+    if (parts.length === 3) return parts[0] + '/' + parts[1] + '/' + parts[2];
+    return str;
+}
+
+// ── Parse CSV ───────────────────────────────────────────────
+function parseCSV(csvText) {
+    var lines = csvText.split('\n');
+    var result = {};
+    var currentLembaga = null;
+    var inTransaksi = false;
+
+    for (var i = 0; i < lines.length; i++) {
+        var rawLine = lines[i];
+        // Split manual sederhana (PapaParse terlalu berat per-baris)
+        var cols = splitCSVLine(rawLine);
+        if (!cols || cols.length < 2) continue;
+
+        var col0 = (cols[0] || '').trim();
+        var col1 = (cols[1] || '').trim();
+
+        // ── Deteksi header lembaga baru ──────────────────────
+        // Baris seperti: "BANI QOFFAL,NO,1,2,3,..."
+        if (col0 !== '' && col1.toUpperCase() === 'NO') {
+            currentLembaga = col0.toUpperCase().trim();
+            if (!result[currentLembaga]) {
+                result[currentLembaga] = { total: 0, bulan: '', transaksi: [] };
+            }
+            inTransaksi = false;
+            continue;
+        }
+
+        // ── Ringkasan lembaga (baris awal, kolom0='', col1='NAMA LEMBAGA')
+        // dipakai untuk summary total di baris atas
+        if (col0 === '' && col1.toUpperCase() === 'NAMA LEMBAGA') {
+            // Header utama — ambil nama lembaga dari col2 dst
+            continue;
+        }
+
+        // ── Baris NOMINAL (ringkasan total) ─────────────────
+        // Format: ,NOMINAL,74153000,...  (col0='', col1='NOMINAL')
+        // Ini adalah baris ringkasan di atas, bukan per-lembaga blok
+        if (col0 === '' && col1.toUpperCase() === 'NOMINAL' && !currentLembaga) {
+            continue; // ringkasan global — skip
+        }
+
+        if (!currentLembaga) continue;
+
+        // ── Baris TOTAL WAKAF ───────────────────────────────
+        if (col1.toUpperCase().includes('TOTAL WAKAF')) {
+            var totalVal = cleanNumber(cols[2] || '');
+            if (totalVal > 0) result[currentLembaga].total = totalVal;
+            inTransaksi = false;
+            continue;
+        }
+
+        // ── Baris angka total di bawah TOTAL WAKAF ──────────
+        // format: ,"74,153,000",...
+        if (col0 === '' && col1 !== '' && !isNaN(cleanNumber(col1)) && cleanNumber(col1) > 0 && result[currentLembaga] && result[currentLembaga].total === 0) {
+            result[currentLembaga].total = cleanNumber(col1);
+            continue;
+        }
+
+        // ── Baris BULAN ────────────────────────────────────
+        if (col1.toUpperCase() === 'BULAN') {
+            var bulanVal = (cols[2] || '').trim();
+            if (bulanVal) result[currentLembaga].bulan = bulanVal;
+            continue;
+        }
+
+        // ── Baris Header transaksi (TANGGAL, NAMA, NOMINAL) ─
+        if (col1.toUpperCase() === 'TANGGAL') {
+            inTransaksi = true;
+            continue;
+        }
+
+        // ── Baris data transaksi ─────────────────────────────
+        if (inTransaksi && col1 !== '' && col1.toUpperCase() !== 'NAMA' && col1.toUpperCase() !== 'TOTAL WAKAF') {
+            var noTrx  = col0 || '';
+            var tgl    = col1;
+            var nama   = (cols[2] || '').trim();
+            var nominal = cleanNumber(cols[3] || '');
+
+            // Validasi: tanggal harus mengandung angka dan '-' atau '/'
+            if (tgl.match(/\d{2}[-\/]\d{2}[-\/]\d{4}/) && nominal > 0) {
+                result[currentLembaga].transaksi.push({
+                    no: noTrx,
+                    tgl: tgl.trim(),
+                    nama: nama,
+                    nominal: nominal
+                });
+            }
+        }
+    }
+
+    return result;
+}
+
+// ── Simple CSV line splitter (handles quoted fields) ────────
+function splitCSVLine(line) {
+    var result = [];
+    var field = '';
+    var inQuote = false;
+    for (var c = 0; c < line.length; c++) {
+        var ch = line[c];
+        if (ch === '"') {
+            inQuote = !inQuote;
+        } else if (ch === ',' && !inQuote) {
+            result.push(field);
+            field = '';
+        } else if (ch !== '\r') {
+            field += ch;
+        }
+    }
+    result.push(field);
+    return result;
+}
+
+// ── Fetch CSV ───────────────────────────────────────────────
+function fetchCSV() {
+    var strip = document.getElementById('loading-strip');
+    strip.style.display = 'block';
+
+    Papa.parse(CSV_URL, {
+        download: true,
+        skipEmptyLines: false,
+        complete: function(results) {
+            strip.style.display = 'none';
+            // Reconstruct raw CSV text from rows for our custom parser
+            var rawLines = results.data.map(function(row) {
+                return row.map(function(cell) {
+                    // re-quote if needed
+                    if (String(cell).includes(',') || String(cell).includes('"')) {
+                        return '"' + String(cell).replace(/"/g, '""') + '"';
+                    }
+                    return cell;
+                }).join(',');
+            }).join('\n');
+
+            ALL_DATA = parseCSVDirect(results.data);
+            LEMBAGA_LIST = Object.keys(ALL_DATA).sort();
+            csvLoaded = true;
+
+            // Trigger search if there's already a value
+            var q = document.getElementById('search-input').value.trim();
+            if (q.length >= 2) doSearch(q);
+        },
+        error: function(err) {
+            strip.style.display = 'none';
+            strip.style.color = '#f8b4b4';
+            strip.textContent = 'Gagal memuat data. Coba muat ulang halaman.';
+            strip.style.display = 'block';
+            console.error('CSV Fetch error', err);
+        }
+    });
+}
+
+// ── Parse from PapaParse rows directly ──────────────────────
+function parseCSVDirect(rows) {
+    var result = {};
+    var currentLembaga = null;
+    var inTransaksi = false;
+
+    for (var i = 0; i < rows.length; i++) {
+        var cols = rows[i];
+        if (!cols || cols.length < 2) continue;
+
+        var col0 = String(cols[0] || '').trim();
+        var col1 = String(cols[1] || '').trim();
+        var col2 = String(cols[2] || '').trim();
+        var col3 = String(cols[3] || '').trim();
+
+        // ── Deteksi blok lembaga baru ────────────────────────
+        // Pola: col0 = nama lembaga, col1 = 'NO'
+        if (col0 !== '' && col1.toUpperCase() === 'NO') {
+            currentLembaga = col0.toUpperCase().trim();
+            if (!result[currentLembaga]) {
+                result[currentLembaga] = { total: 0, bulan: '', transaksi: [] };
+            }
+            inTransaksi = false;
+            continue;
+        }
+
+        if (!currentLembaga) continue;
+
+        // ── BULAN ────────────────────────────────────────────
+        if (col1.toUpperCase() === 'BULAN' || (col0 === '' && col1.toUpperCase() === 'BULAN')) {
+            if (col2 && col2 !== '' && !result[currentLembaga].bulan) {
+                result[currentLembaga].bulan = col2;
+            }
+            continue;
+        }
+
+        // ── NOMINAL (total ringkasan lembaga) ────────────────
+        if (col1.toUpperCase() === 'NOMINAL' || (col0 === '' && col1.toUpperCase() === 'NOMINAL')) {
+            if (col2 && result[currentLembaga].total === 0) {
+                result[currentLembaga].total = cleanNumber(col2);
+            }
+            continue;
+        }
+
+        // ── TOTAL WAKAF (akhir blok) ─────────────────────────
+        if (col1.toUpperCase().indexOf('TOTAL') !== -1 && col1.toUpperCase().indexOf('WAKAF') !== -1) {
+            inTransaksi = false;
+            continue;
+        }
+
+        // ── Baris total angka (col0='', col1=number, setelah total wakaf)
+        if (col0 === '' && col1 !== '' && /^[\d,.]+$/.test(col1) && result[currentLembaga].total === 0) {
+            result[currentLembaga].total = cleanNumber(col1);
+            continue;
+        }
+
+        // ── Header transaksi ─────────────────────────────────
+        if (col1.toUpperCase() === 'TANGGAL') {
+            inTransaksi = true;
+            continue;
+        }
+
+        // ── Data transaksi ───────────────────────────────────
+        if (inTransaksi) {
+            var tgl = col1;
+            var namaWakif = col2;
+            var nominalTrx = cleanNumber(col3);
+
+            // Tanggal harus berbentuk dd-mm-yyyy atau dd/mm/yyyy
+            if (tgl.match(/\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/) && nominalTrx > 0) {
+                result[currentLembaga].transaksi.push({
+                    no: col0 || '',
+                    tgl: tgl,
+                    nama: namaWakif,
+                    nominal: nominalTrx
+                });
+            }
+        }
+    }
+
+    // Hitung total dari transaksi jika total masih 0
+    Object.keys(result).forEach(function(k) {
+        if (result[k].total === 0 && result[k].transaksi.length > 0) {
+            result[k].total = result[k].transaksi.reduce(function(s, t) { return s + t.nominal; }, 0);
+        }
+    });
+
+    return result;
+}
+
+// ── Search logic ─────────────────────────────────────────────
+function doSearch(q) {
+    q = q.trim();
+    var btnClear = document.getElementById('btn-clear');
+    btnClear.style.display = q ? 'block' : 'none';
+
+    if (q.length < 2) {
+        hideResult();
+        showEmptyState();
+        hideAutocomplete();
+        return;
+    }
+
+    var qUp = q.toUpperCase();
+    var matches = LEMBAGA_LIST.filter(function(n) {
+        return n.indexOf(qUp) !== -1;
+    });
+
+    showAutocomplete(matches, q);
+
+    if (!csvLoaded) return; // data belum siap
+
+    if (matches.length === 0) {
+        hideResult();
+        document.getElementById('not-found').style.display = 'block';
+        document.getElementById('empty-state').style.display = 'none';
+        return;
+    }
+
+    // Tampilkan lembaga paling relevan (exact atau pertama)
+    var best = matches.find(function(n) { return n === qUp; }) || matches[0];
+    showLembaga(best);
+}
+
+function showEmptyState() {
+    document.getElementById('empty-state').style.display = 'block';
+    document.getElementById('not-found').style.display = 'none';
+}
+function hideResult() {
+    document.getElementById('result-area').style.display = 'none';
+    document.getElementById('result-area').innerHTML = '';
+    if (currentChart) { currentChart.destroy(); currentChart = null; }
+}
+
+// ── Autocomplete ─────────────────────────────────────────────
+function showAutocomplete(matches, q) {
+    var list = document.getElementById('autocomplete-list');
+    if (!csvLoaded || matches.length === 0) { hideAutocomplete(); return; }
+
+    var qUp = q.toUpperCase();
+    var html = '';
+    matches.slice(0, 8).forEach(function(name) {
+        var highlighted = name.replace(qUp, '<em>' + qUp + '</em>');
+        html += '<div class="autocomplete-item" onclick="selectLembaga(\'' + name.replace(/'/g, "\\'") + '\')">' +
+                '<i class="bx bx-buildings"></i>' + highlighted + '</div>';
+    });
+
+    list.innerHTML = html;
+    list.style.display = 'block';
+}
+function hideAutocomplete() {
+    document.getElementById('autocomplete-list').style.display = 'none';
+}
+function selectLembaga(name) {
+    document.getElementById('search-input').value = name;
+    hideAutocomplete();
+    showLembaga(name);
+}
+
+// ── Render Lembaga ────────────────────────────────────────────
+function showLembaga(name) {
+    var data = ALL_DATA[name];
+    if (!data) return;
+
+    currentName = name;
+    currentData = data;
+    currentPage = 1;
+
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('not-found').style.display = 'none';
+    document.getElementById('result-area').style.display = 'block';
+
+    if (currentChart) { currentChart.destroy(); currentChart = null; }
+
+    var trx = data.transaksi;
+    var total = data.total;
+    var bulan = data.bulan || '-';
+    var jmlTrx = trx.length;
+
+    // Tentukan icon berdasarkan nama
+    var icon = getIcon(name);
+
+    // ── Build kumulatif per tanggal untuk chart ──────────────
+    var chartData = buildChartData(trx);
+
+    // ── Render HTML ──────────────────────────────────────────
+    var html = '<div class="lembaga-card">';
+
+    // Header
+    html += '<div class="card-header-lembaga">' +
+        '<div class="card-icon"><i class="bx ' + icon + '"></i></div>' +
+        '<div class="card-meta">' +
+            '<div class="card-title">' + capitalize(name) + '</div>' +
+            '<div class="card-sub">' +
+                '<span class="badge-bulan"><i class="bx bx-calendar-check"></i> ' + bulan + '</span>' +
+                '<span>Laporan Penerimaan Wakaf</span>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+
+    // Stats
+    html += '<div class="stats-bar">' +
+        '<div class="stat-item"><div class="stat-label">Total Akumulasi</div><div class="stat-value green">' + formatRp(total) + '</div></div>' +
+        '<div class="stat-item"><div class="stat-label">Jumlah Transaksi</div><div class="stat-value">' + jmlTrx.toLocaleString('id') + '</div></div>' +
+        '<div class="stat-item"><div class="stat-label">Rata-rata / Trx</div><div class="stat-value gold">' + (jmlTrx > 0 ? formatRp(total / jmlTrx) : '-') + '</div></div>' +
+    '</div>';
+
+    // Chart (hanya jika ada data)
+    if (chartData.labels.length > 1) {
+        html += '<div class="section-title"><i class="bx bx-line-chart"></i>Perkembangan Kumulatif Wakaf</div>';
+        html += '<div class="chart-wrap"><canvas id="lembaga-chart"></canvas></div>';
+        html += '<hr class="divider">';
+    }
+
+    // Table header
+    html += '<div class="table-section">' +
+        '<div class="section-title"><i class="bx bx-list-ul"></i>Riwayat Transaksi Penerimaan</div>';
+
+    // Build table
+    html += '<div class="table-responsive"><table class="trx-table"><thead><tr>' +
+        '<th>No</th><th>Tanggal</th><th>Nama Wakif</th><th>Nominal</th>' +
+    '</tr></thead><tbody id="trx-tbody"></tbody>' +
+    '<tfoot><tr class="tfoot-row">' +
+        '<td colspan="3" style="text-align:right;padding-right:14px;">Total Penerimaan</td>' +
+        '<td>' + formatRpFull(total) + '</td>' +
+    '</tr></tfoot></table></div>';
+
+    html += '<div class="pagination-wrap" id="pagination-wrap"></div>';
+    html += '</div>'; // table-section
+    html += '</div>'; // lembaga-card
+
+    document.getElementById('result-area').innerHTML = html;
+
+    // Render chart
+    if (chartData.labels.length > 1) {
+        renderChart(chartData);
+    }
+
+    // Render tabel
+    renderTable();
+}
+
+// ── Build chart data (kumulatif per bulan) ────────────────────
+function buildChartData(trx) {
+    if (!trx || trx.length === 0) return { labels: [], values: [] };
+
+    // Group by bulan (mm/yyyy)
+    var monthly = {};
+    trx.forEach(function(t) {
+        var parts = t.tgl.trim().split(/[-\/]/);
+        if (parts.length < 3) return;
+        var key = parts[1] + '/' + parts[2]; // mm/yyyy
+        monthly[key] = (monthly[key] || 0) + t.nominal;
+    });
+
+    // Sort by date
+    var keys = Object.keys(monthly).sort(function(a, b) {
+        var pa = a.split('/'); var pb = b.split('/');
+        var da = new Date(parseInt(pa[1]), parseInt(pa[0]) - 1, 1);
+        var db = new Date(parseInt(pb[1]), parseInt(pb[0]) - 1, 1);
+        return da - db;
+    });
+
+    // Kumulatif
+    var labels = [];
+    var values = [];
+    var running = 0;
+    keys.forEach(function(k) {
+        running += monthly[k];
+        labels.push(k);
+        values.push(running);
+    });
+
+    return { labels: labels, values: values };
+}
+
+// ── Render Chart ──────────────────────────────────────────────
+function renderChart(chartData) {
+    var canvas = document.getElementById('lembaga-chart');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Akumulasi Wakaf',
+                data: chartData.values,
+                backgroundColor: 'rgba(42,157,143,0.12)',
+                borderColor: '#2a9d8f',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#e9c46a',
+                pointBorderColor: '#2a9d8f',
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ' ' + formatRpFull(ctx.raw); }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 }, maxTicksLimit: 12 }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: {
+                        callback: function(v) { return formatRp(v); },
+                        maxTicksLimit: 6,
+                        font: { size: 10 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ── Render Table with Pagination ──────────────────────────────
+function renderTable() {
+    var trx = currentData.transaksi;
+    var total = trx.length;
+    var totalPages = Math.ceil(total / ROWS_PER_PAGE);
+    if (totalPages < 1) totalPages = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    var start = (currentPage - 1) * ROWS_PER_PAGE;
+    var end   = Math.min(start + ROWS_PER_PAGE, total);
+    var slice = trx.slice(start, end);
+
+    var tbody = document.getElementById('trx-tbody');
+    if (!tbody) return;
+
+    if (slice.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aab;padding:20px;">Belum ada data transaksi</td></tr>';
+    } else {
+        var html = '';
+        slice.forEach(function(t, idx) {
+            html += '<tr>' +
+                '<td>' + (start + idx + 1) + '</td>' +
+                '<td><span class="tgl-badge">' + fmtTgl(t.tgl) + '</span></td>' +
+                '<td>' + (t.nama || '-') + '</td>' +
+                '<td>' + formatRpFull(t.nominal) + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+    }
+
+    // Pagination
+    var pgWrap = document.getElementById('pagination-wrap');
+    if (!pgWrap) return;
+
+    var pgInfo = 'Menampilkan ' + (start+1) + '–' + end + ' dari ' + total + ' transaksi';
+    var pgHtml = '<span class="pg-info">' + pgInfo + '</span><div class="pg-btns">';
+
+    pgHtml += '<button class="pg-btn" onclick="changePage(' + (currentPage-1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="bx bx-chevron-left"></i></button>';
+
+    // Page number buttons
+    var startPg = Math.max(1, currentPage - 2);
+    var endPg   = Math.min(totalPages, currentPage + 2);
+    if (startPg > 1) pgHtml += '<button class="pg-btn" onclick="changePage(1)">1</button>';
+    if (startPg > 2) pgHtml += '<span style="color:#aab;padding:0 4px;">…</span>';
+
+    for (var p = startPg; p <= endPg; p++) {
+        pgHtml += '<button class="pg-btn' + (p === currentPage ? ' active' : '') + '" onclick="changePage(' + p + ')">' + p + '</button>';
+    }
+
+    if (endPg < totalPages - 1) pgHtml += '<span style="color:#aab;padding:0 4px;">…</span>';
+    if (endPg < totalPages) pgHtml += '<button class="pg-btn" onclick="changePage(' + totalPages + ')">' + totalPages + '</button>';
+
+    pgHtml += '<button class="pg-btn" onclick="changePage(' + (currentPage+1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="bx bx-chevron-right"></i></button>';
+    pgHtml += '</div>';
+
+    pgWrap.innerHTML = pgHtml;
+}
+
+function changePage(p) {
+    var total = currentData ? currentData.transaksi.length : 0;
+    var totalPages = Math.ceil(total / ROWS_PER_PAGE);
+    if (p < 1 || p > totalPages) return;
+    currentPage = p;
+    renderTable();
+    document.getElementById('result-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Icon helper ───────────────────────────────────────────────
+function getIcon(name) {
+    var n = name.toUpperCase();
+    if (n.includes('MASJID') || n.includes('MUSHOLLA')) return 'bx-buildings';
+    if (n.includes('PP') || n.includes('PESANTREN') || n.includes('PPMA')) return 'bx-home-heart';
+    if (n.includes('MI ') || n.includes('MA ') || n.includes('MTS') || n.includes('SDN') || n.includes('SMP') || n.includes('SMK') || n.includes('MINU') || n.includes('MADIN') || n.includes('MDT') || n.includes('TPQ')) return 'bx-library';
+    if (n.includes('BMT') || n.includes('KSPPS') || n.includes('KOPSYAH') || n.includes('KOPMA') || n.includes('KOPERASI')) return 'bx-bank';
+    if (n.includes('BANI') || n.includes('ALUMNI') || n.includes('IKA') || n.includes('PCNU') || n.includes('MWC') || n.includes('FATAYAT') || n.includes('YIM') || n.includes('IKAPETE')) return 'bx-group';
+    if (n.includes('YYS') || n.includes('YPS') || n.includes('YPP') || n.includes('YAYASAN')) return 'bx-donate-heart';
+    if (n.includes('DESA') || n.includes('TOKO') || n.includes('CAFE')) return 'bx-store';
+    return 'bx-money-withdraw';
+}
+
+function capitalize(str) {
+    return str.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+}
+
+// ── UI Events ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('search-input');
+    var btnClear = document.getElementById('btn-clear');
+
+    input.addEventListener('input', function() {
+        doSearch(this.value);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideAutocomplete();
+            input.blur();
+        }
+    });
+
+    btnClear.addEventListener('click', function() {
+        input.value = '';
+        btnClear.style.display = 'none';
+        hideResult();
+        showEmptyState();
+        hideAutocomplete();
+        input.focus();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('search-wrap').contains(e.target)) {
+            hideAutocomplete();
+        }
+    });
+
+    // Start fetching
+    fetchCSV();
+});
+</script>
+</body>
+</html>
