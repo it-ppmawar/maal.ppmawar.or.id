@@ -454,8 +454,13 @@
         }
         @media (max-width: 480px) {
             .hide-mobile { display: none; }
-            .top-bar-inner { padding: 0 12px; gap: 8px; }
-            .brand { font-size: 1.05rem; }
+            .top-bar-inner { padding: 0 10px; gap: 6px; }
+            .brand { font-size: .95rem; white-space: normal; max-width: 55%; }
+            .back-link { font-size: .75rem; padding: 5px 8px; background: rgba(255,255,255,.1); border-radius: 8px; flex-shrink: 0; }
+        }
+        @media (max-width: 360px) {
+            .brand { font-size: .88rem; }
+            .back-link { font-size: .70rem; }
         }
     </style>
 </head>
@@ -559,7 +564,37 @@ function formatRpFull(val) {
 }
 function cleanNumber(str) {
     if (!str) return 0;
-    return parseFloat(String(str).replace(/[^\d.]/g, '')) || 0;
+    var s = String(str).trim();
+    // Hapus semua karakter kecuali digit, koma, titik
+    // Format Indonesia: 74.153.000 (titik) atau 74,153,000 (koma)
+    // Deteksi: jika ada titik DAN koma, yang terakhir adalah desimal
+    // Jika hanya titik: mungkin ribuan (misal 74.153.000)
+    var hasDot   = s.indexOf('.') !== -1;
+    var hasComma = s.indexOf(',') !== -1;
+    if (hasDot && hasComma) {
+        // Format: 1.234.567,89 → hapus titik, ganti koma jadi titik
+        var lastComma = s.lastIndexOf(',');
+        var lastDot   = s.lastIndexOf('.');
+        if (lastDot > lastComma) {
+            // titik sebagai desimal: 1,234,567.89
+            s = s.replace(/,/g, '');
+        } else {
+            // koma sebagai desimal: 1.234.567,89
+            s = s.replace(/\./g, '').replace(',', '.');
+        }
+    } else if (hasDot) {
+        // Bisa ribuan (74.153.000) atau desimal (3.14)
+        var parts = s.split('.');
+        if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+            // ribuan: hapus titik
+            s = s.replace(/\./g, '');
+        }
+        // else biarkan sebagai float
+    } else if (hasComma) {
+        // Koma sebagai ribuan: 74,153,000
+        s = s.replace(/,/g, '');
+    }
+    return parseFloat(s.replace(/[^\d.]/g, '')) || 0;
 }
 function fmtTgl(str) {
     if (!str) return '-';
@@ -687,61 +722,78 @@ function fetchCSV() {
     var strip = document.getElementById('loading-strip');
     strip.style.display = 'block';
 
-    Papa.parse(CSV_URL, {
-        download: true,
-        skipEmptyLines: false,
-        complete: function(results) {
+    // Coba fetch manual dulu (lebih reliable untuk file besar)
+    fetch(CSV_URL)
+        .then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.text();
+        })
+        .then(function(csvText) {
             strip.style.display = 'none';
-            // Reconstruct raw CSV text from rows for our custom parser
-            var rawLines = results.data.map(function(row) {
-                return row.map(function(cell) {
-                    // re-quote if needed
-                    if (String(cell).includes(',') || String(cell).includes('"')) {
-                        return '"' + String(cell).replace(/"/g, '""') + '"';
-                    }
-                    return cell;
-                }).join(',');
-            }).join('\n');
-
-            ALL_DATA = parseCSVDirect(results.data);
-            LEMBAGA_LIST = Object.keys(ALL_DATA).sort();
+            console.log('[CSV] Berhasil fetch, panjang:', csvText.length);
+            ALL_DATA = parseCSVText(csvText);
+            var keys = Object.keys(ALL_DATA);
+            console.log('[CSV] Lembaga ditemukan:', keys.length, keys);
+            LEMBAGA_LIST = keys.sort();
             csvLoaded = true;
-
-            // Trigger search if there's already a value
             var q = document.getElementById('search-input').value.trim();
             if (q.length >= 2) doSearch(q);
-        },
-        error: function(err) {
-            strip.style.display = 'none';
-            strip.style.color = '#f8b4b4';
-            strip.textContent = 'Gagal memuat data. Coba muat ulang halaman.';
-            strip.style.display = 'block';
-            console.error('CSV Fetch error', err);
-        }
+        })
+        .catch(function(err) {
+            console.warn('[CSV] fetch gagal, fallback ke PapaParse:', err);
+            // Fallback ke PapaParse
+            Papa.parse(CSV_URL, {
+                download: true,
+                skipEmptyLines: false,
+                complete: function(results) {
+                    strip.style.display = 'none';
+                    console.log('[PapaParse] rows:', results.data.length);
+                    ALL_DATA = parseCSVDirect(results.data);
+                    var keys = Object.keys(ALL_DATA);
+                    console.log('[PapaParse] Lembaga:', keys.length, keys);
+                    LEMBAGA_LIST = keys.sort();
+                    csvLoaded = true;
+                    var q = document.getElementById('search-input').value.trim();
+                    if (q.length >= 2) doSearch(q);
+                },
+                error: function(err2) {
+                    strip.style.display = 'none';
+                    strip.style.color = '#f8b4b4';
+                    strip.textContent = 'Gagal memuat data. Coba muat ulang halaman.';
+                    strip.style.display = 'block';
+                    console.error('[PapaParse] error:', err2);
+                }
+            });
+        });
+}
+
+// ── Parse dari raw CSV text (metode utama, lebih handal) ────
+function parseCSVText(csvText) {
+    // Split ke baris, parse setiap baris dengan custom splitter
+    var lines = csvText.split('\n');
+    var rows = lines.map(function(line) {
+        return splitCSVLine(line);
     });
+    return parseCSVDirect(rows);
 }
 
 // ── Parse from PapaParse rows directly ──────────────────────
 function parseCSVDirect(rows) {
     var result = {};
     
-    // 1. Baca Header Utama (Baris ke 1 s/d 3 di file CSV)
+    // 1. Baca Header Utama (Baris ke 1 s/d 10 di file CSV)
     var headerLembagaRow = null;
-    var headerTotalRow = null;
-    var headerBulanRow = null;
+    var headerTotalRow   = null;
+    var headerBulanRow   = null;
     
     var checkLines = Math.min(15, rows.length);
     for (var i = 0; i < checkLines; i++) {
         var row = rows[i];
         if (!row || row.length < 2) continue;
         var label = String(row[1] || '').trim().toUpperCase();
-        if (label === 'NAMA LEMBAGA') {
-            headerLembagaRow = row;
-        } else if (label === 'NOMINAL') {
-            headerTotalRow = row;
-        } else if (label === 'BULAN') {
-            headerBulanRow = row;
-        }
+        if (label === 'NAMA LEMBAGA')  headerLembagaRow = row;
+        else if (label === 'NOMINAL')  headerTotalRow   = row;
+        else if (label === 'BULAN')    headerBulanRow   = row;
     }
     
     // Inisialisasi awal list lembaga dari header global
@@ -751,16 +803,20 @@ function parseCSVDirect(rows) {
             if (name !== '' && name !== 'NAMA LEMBAGA') {
                 var totalVal = headerTotalRow ? cleanNumber(headerTotalRow[col]) : 0;
                 var bulanVal = headerBulanRow ? String(headerBulanRow[col]).trim() : '';
-                result[name] = {
-                    total: totalVal,
-                    bulan: bulanVal,
-                    transaksi: []
-                };
+                result[name] = { total: totalVal, bulan: bulanVal, transaksi: [] };
             }
         }
     }
     
     // 2. Baca Blok Transaksi Horizontal
+    // Fungsi helper: cari posisi 'NO' dalam sebuah baris
+    function findNoColIdx(row) {
+        for (var c = 0; c < Math.min(row.length, 20); c++) {
+            if (String(row[c] || '').trim().toUpperCase() === 'NO') return c;
+        }
+        return -1;
+    }
+    
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         if (!row || row.length < 2) continue;
@@ -768,67 +824,100 @@ function parseCSVDirect(rows) {
         var col0 = String(row[0] || '').trim().toUpperCase();
         var col1 = String(row[1] || '').trim().toUpperCase();
         
-        // Deteksi baris pertama dari blok lembaga, contoh: ['ALUMNI MAWAR', 'NO', '1', '2', '3', ...]
+        // Deteksi baris blok lembaga:
+        // Format normal: col0=NAMA_LEMBAGA, col1=NO
+        // Format BANI MUZAKKI: col0=BANI MUZAKKI, col1=REKAPITULASI..., col[N]=NO
+        var isLembagaBlock = false;
+        var noColStart     = 1; // default: NO ada di col[1]
+        
         if (col0 !== '' && col1 === 'NO') {
-            var name = col0;
-            
-            var rowNo = row;
-            var rowTgl = null;
-            var rowNama = null;
-            var rowNominal = null;
-            var rowTotalWakaf = null;
-            
-            // Cari baris TANGGAL, NAMA, dan NOMINAL di bawahnya
-            for (var offset = 1; offset <= 6; offset++) {
-                if (i + offset >= rows.length) break;
-                var nextRow = rows[i + offset];
-                var subLabel = String(nextRow[1] || '').trim().toUpperCase();
-                
-                if (subLabel === 'TANGGAL') {
-                    rowTgl = nextRow;
-                } else if (subLabel === 'NAMA') {
-                    rowNama = nextRow;
-                } else if (subLabel === 'NOMINAL') {
-                    rowNominal = nextRow;
-                } else if (subLabel === 'TOTAL WAKAF') {
-                    rowTotalWakaf = rows[i + offset + 1];
-                }
+            isLembagaBlock = true;
+            noColStart = 1;
+        } else if (col0 !== '' && col1 !== '' && col1 !== 'NO') {
+            // Cek apakah ada 'NO' di kolom lain dalam baris ini
+            var noIdx = findNoColIdx(row);
+            if (noIdx > 1) {
+                isLembagaBlock = true;
+                noColStart = noIdx;
             }
-            
-            // Jika struktur baris horizontal lengkap, zip kolom-kolomnya menjadi list transaksi
-            if (rowNo && rowTgl && rowNama && rowNominal) {
-                if (!result[name]) {
-                    result[name] = { total: 0, bulan: '', transaksi: [] };
-                }
-                
-                var maxCols = Math.max(rowNo.length, rowTgl.length, rowNama.length, rowNominal.length);
-                for (var colIdx = 2; colIdx < maxCols; colIdx++) {
-                    var trxNo = String(rowNo[colIdx] || '').trim();
-                    var trgTgl = String(rowTgl[colIdx] || '').trim();
-                    var trxNama = String(rowNama[colIdx] || '').trim();
-                    var trxNominal = cleanNumber(rowNominal[colIdx] || '0');
-                    
-                    if (trgTgl && trxNominal > 0) {
-                        result[name].transaksi.push({
-                            no: trxNo,
-                            tgl: trgTgl,
-                            nama: trxNama,
-                            nominal: trxNominal
-                        });
-                    }
-                }
-            }
-            
-            // Update total jika ditemukan baris total wakaf yang valid
-            if (rowTotalWakaf && result[name]) {
-                var totalVal = cleanNumber(rowTotalWakaf[1] || '0');
-                if (totalVal > 0) {
-                    result[name].total = totalVal;
-                }
-            }
-            
-            i += 4; 
         }
+        
+        if (!isLembagaBlock) continue;
+        
+        var name = col0;
+        if (!name) continue;
+        
+        // Indeks kolom data mulai setelah posisi NO+1 (karena NO=col[noColStart], data mulai col[noColStart+1])
+        var dataStartCol = noColStart + 1;
+        
+        var rowNo      = row;   // baris yang berisi NO
+        var rowTgl     = null;
+        var rowNama    = null;
+        var rowNominal = null;
+        var rowTotalWakafVal = null; // simpan nilai total langsung
+        
+        // Cari baris TANGGAL, NAMA, NOMINAL, TOTAL WAKAF di offset 1..10
+        for (var offset = 1; offset <= 10; offset++) {
+            if (i + offset >= rows.length) break;
+            var nextRow   = rows[i + offset];
+            if (!nextRow)  continue;
+            
+            var subLabel1 = String(nextRow[1] || '').trim().toUpperCase();
+            var subLabel2 = noColStart > 1 ? String(nextRow[noColStart] || '').trim().toUpperCase() : '';
+            
+            if (subLabel1 === 'TANGGAL' || subLabel2 === 'TANGGAL' || subLabel1 === 'TGL TRANSFER' || subLabel2 === 'TGL TRANSFER') {
+                rowTgl = nextRow;
+            } else if (subLabel1 === 'NAMA' || subLabel2 === 'NAMA') {
+                rowNama = nextRow;
+            } else if (subLabel1 === 'NOMINAL' || subLabel2 === 'NOMINAL') {
+                rowNominal = nextRow;
+            } else if (subLabel1.indexOf('TOTAL WAKAF') !== -1 || subLabel2.indexOf('TOTAL WAKAF') !== -1) {
+                // Nilai total ada di baris BERIKUTNYA, col[1]
+                var totalRow = rows[i + offset + 1];
+                if (totalRow) {
+                    rowTotalWakafVal = cleanNumber(totalRow[1] || '0');
+                }
+            }
+        }
+        
+        // Proses transaksi jika struktur lengkap
+        if (rowNo && rowTgl && rowNominal) {
+            if (!result[name]) {
+                result[name] = { total: 0, bulan: '', transaksi: [] };
+            }
+            
+            var maxCols = Math.max(
+                rowNo.length,
+                rowTgl.length,
+                rowNama ? rowNama.length : 0,
+                rowNominal.length
+            );
+            
+            for (var colIdx = dataStartCol; colIdx < maxCols; colIdx++) {
+                var trxNo     = String(rowNo[colIdx]      || '').trim();
+                var trxTgl    = String(rowTgl[colIdx]     || '').trim();
+                var trxNama   = rowNama ? String(rowNama[colIdx] || '').trim() : '';
+                var trxNominal = cleanNumber(rowNominal[colIdx] || '0');
+                
+                // Simpan jika ada nominal > 0 (tanggal opsional)
+                if (trxNominal > 0) {
+                    result[name].transaksi.push({
+                        no:      trxNo,
+                        tgl:     trxTgl,
+                        nama:    trxNama,
+                        nominal: trxNominal
+                    });
+                }
+            }
+        }
+        
+        // Update total
+        if (rowTotalWakafVal && rowTotalWakafVal > 0 && result[name]) {
+            result[name].total = rowTotalWakafVal;
+        }
+        
+        // Skip baris yang sudah diproses (NO + TANGGAL + NAMA + NOMINAL + kosong = 5 baris min)
+        i += 5;
     }
     
     // Fallback: hitung ulang total nominal jika total masih 0 tapi ada transaksi
@@ -836,6 +925,11 @@ function parseCSVDirect(rows) {
         if (result[k].total === 0 && result[k].transaksi.length > 0) {
             result[k].total = result[k].transaksi.reduce(function(s, t) { return s + t.nominal; }, 0);
         }
+    });
+    
+    console.log('[parseCSVDirect] Result summary:');
+    Object.keys(result).forEach(function(k) {
+        console.log(' ', k, '-> trx:', result[k].transaksi.length, 'total:', result[k].total);
     });
     
     return result;
