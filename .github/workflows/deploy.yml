@@ -1,0 +1,60 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-main:
+    name: 🌐 Deploy Main Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 📂 Sync Main Site via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Upload all files from root
+          local-dir: ./
+          # Path target untuk web utama di cPanel
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+          # Abaikan file/folder yang tidak perlu di-deploy ke web utama
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/laporan_maal/**
+            **/.vscode/**
+            *.zip
+            *.sql
+            *.xlsx
+            temp.txt
+            cache_rat.json
+            test.csv
+            test2024.csv
+
+  deploy-subdomain:
+    name: 📊 Deploy Subdomain Laporan
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 📂 Sync Subdomain via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Hanya upload isi dari folder laporan_maal
+          local-dir: ./laporan_maal/
+          # Path target untuk subdomain laporan.maal di cPanel
+          server-dir: ${{ secrets.FTP_SUBDOMAIN_TARGET_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
