@@ -33,8 +33,9 @@ echo "Home dir: $homeDir\n";
 $possibleDirs = [
     $homeDir . '/laporan.maal.ppmawar.or.id',
     $homeDir . '/laporan.maal.ppmawar.or.id/public_html',
-    $docRoot . '/laporan_maal',
+    dirname($docRoot) . '/laporan_maal',
     dirname($docRoot) . '/laporan.maal.ppmawar.or.id',
+    $docRoot . '/laporan_maal',
 ];
 
 $subdomainDir = null;
