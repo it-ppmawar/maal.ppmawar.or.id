@@ -1032,6 +1032,7 @@ function parseCSVDirect(rows) {
         var rowNama    = null;
         var rowNominal = null;
         var rowTotalWakafVal = null; // simpan nilai total langsung
+        var totalWakafCalc   = 0;    // simpan akumulasi dari kolom data
         
         // Cari baris TANGGAL, NAMA, NOMINAL, TOTAL WAKAF di offset 1..10
         for (var offset = 1; offset <= 10; offset++) {
@@ -1042,18 +1043,21 @@ function parseCSVDirect(rows) {
             var subLabel1 = String(nextRow[1] || '').trim().toUpperCase();
             var subLabel2 = noColStart > 1 ? String(nextRow[noColStart] || '').trim().toUpperCase() : '';
             
-            if (subLabel1 === 'TANGGAL' || subLabel2 === 'TANGGAL' || subLabel1 === 'TGL TRANSFER' || subLabel2 === 'TGL TRANSFER') {
+            if (!rowTgl && (subLabel1 === 'TANGGAL' || subLabel2 === 'TANGGAL' || subLabel1 === 'TGL TRANSFER' || subLabel2 === 'TGL TRANSFER')) {
                 rowTgl = nextRow;
-            } else if (subLabel1 === 'NAMA' || subLabel2 === 'NAMA') {
+            } else if (!rowNama && (subLabel1 === 'NAMA' || subLabel2 === 'NAMA')) {
                 rowNama = nextRow;
-            } else if (subLabel1 === 'NOMINAL' || subLabel2 === 'NOMINAL') {
+            } else if (!rowNominal && (subLabel1 === 'NOMINAL' || subLabel2 === 'NOMINAL')) {
                 rowNominal = nextRow;
-            } else if (subLabel1.indexOf('TOTAL WAKAF') !== -1 || subLabel2.indexOf('TOTAL WAKAF') !== -1) {
+            } else if (!rowTotalWakafVal && (subLabel1.indexOf('TOTAL WAKAF') !== -1 || subLabel2.indexOf('TOTAL WAKAF') !== -1)) {
                 // Nilai total ada di baris BERIKUTNYA, col[1]
                 var totalRow = rows[i + offset + 1];
                 if (totalRow) {
                     rowTotalWakafVal = cleanNumber(totalRow[1] || '0');
                 }
+            } else if (!rowTotalWakafVal && subLabel1.indexOf('JUMLAH TOTAL') !== -1) {
+                // Format khusus Bani Muzakki: JUMLAH TOTAL di col 1, nilai di col 2
+                rowTotalWakafVal = cleanNumber(nextRow[2] || '0');
             }
         }
         
@@ -1084,6 +1088,7 @@ function parseCSVDirect(rows) {
                         nama:    trxNama,
                         nominal: trxNominal
                     });
+                    totalWakafCalc += trxNominal;
                 }
             }
         }
@@ -1091,6 +1096,8 @@ function parseCSVDirect(rows) {
         // Update total
         if (rowTotalWakafVal && rowTotalWakafVal > 0 && result[name]) {
             result[name].total = rowTotalWakafVal;
+        } else if (totalWakafCalc > 0 && result[name] && totalWakafCalc > result[name].total) {
+            result[name].total = totalWakafCalc;
         }
         
         // Skip baris yang sudah diproses (NO + TANGGAL + NAMA + NOMINAL + kosong = 5 baris min)
