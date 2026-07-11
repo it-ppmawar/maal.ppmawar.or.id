@@ -18,7 +18,8 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Cache-Control: public, max-age=300');
 
 // ── Cek cache ─────────────────────────────────────────────────
-if (file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
+$forceFresh = isset($_GET['t']);
+if (!$forceFresh && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
     echo file_get_contents($CACHE_FILE);
     exit;
 }

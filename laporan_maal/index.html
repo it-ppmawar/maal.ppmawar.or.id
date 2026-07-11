@@ -84,6 +84,42 @@
         }
         .back-link:hover { opacity: .75; }
 
+        /* Sync Button */
+        .sync-btn {
+            background: rgba(42, 157, 143, 0.12);
+            border: 1.5px solid var(--teal);
+            color: var(--teal);
+            font-family: 'Poppins', sans-serif;
+            font-size: .8rem;
+            font-weight: 600;
+            border-radius: 50px;
+            padding: 5px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all .25s ease;
+            outline: none;
+        }
+        .sync-btn:hover:not(:disabled) {
+            background: var(--teal);
+            color: #fff;
+        }
+        .sync-btn:disabled {
+            opacity: .6;
+            cursor: default;
+        }
+        .sync-btn i {
+            font-size: 1.05rem;
+            transition: transform .5s ease;
+        }
+        .sync-btn.spinning i {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
         /* ══ Hero / Intro ═════════════════════════════════════════ */
         .hero {
             background: linear-gradient(135deg, var(--navy) 0%, var(--navy3) 60%, #2a6496 100%);
@@ -434,6 +470,30 @@
         }
         .pg-info { font-size: .8rem; color: var(--muted); }
         .pg-btns { display: flex; gap: 6px; align-items: center; }
+
+        /* Row select */
+        .row-select-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .8rem;
+            color: var(--muted);
+        }
+        .row-select-wrap select {
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            color: var(--navy);
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            outline: none;
+            transition: all .2s;
+        }
+        .row-select-wrap select:focus {
+            border-color: var(--teal);
+        }
         .pg-btn {
             padding: 5px 12px;
             border-radius: 7px;
@@ -471,7 +531,15 @@
         /* ══ Responsive ════════════════════════════════════════════ */
         @media (max-width: 600px) {
             .card-header-lembaga { flex-direction: column; text-align: center; }
-            .stat-item { min-width: 100px; }
+            .stats-bar { flex-direction: column; }
+            .stat-item {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                width: 100%;
+                padding: 12px 16px;
+                text-align: center;
+            }
+            .stat-item:last-child { border-bottom: none; }
             .search-card { padding: 20px 16px 18px; }
         }
         @media (max-width: 480px) {
@@ -492,9 +560,14 @@
 <nav class="top-bar">
     <div class="top-bar-inner">
         <a href="https://maal.ppmawar.or.id" class="brand">MAAL <span>KSPPS MAWAR</span></a>
-        <a href="https://maal.ppmawar.or.id" class="back-link">
-            <i class='bx bx-arrow-back'></i> Kembali<span class="hide-mobile"> ke Beranda</span>
-        </a>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="syncData()" class="sync-btn" id="btn-sync" title="Sinkronisasi Data Google Sheets">
+                <i class='bx bx-refresh'></i><span> Sinkronkan</span>
+            </button>
+            <a href="https://maal.ppmawar.or.id" class="back-link">
+                <i class='bx bx-arrow-back'></i> Kembali<span class="hide-mobile"> ke Beranda</span>
+            </a>
+        </div>
     </div>
 </nav>
 
@@ -511,7 +584,7 @@
                 type="text"
                 id="search-input"
                 class="search-input"
-                placeholder="Contoh: Bani Qoffal, IKAPETE, Bani Miraza..."
+                placeholder=""
                 autocomplete="off"
                 spellcheck="false"
             >
@@ -678,34 +751,28 @@ function parseCSV(csvText) {
             continue;
         }
 
-        // ── Baris angka total di bawah TOTAL WAKAF ──────────
-        // format: ,"74,153,000",...
         if (col0 === '' && col1 !== '' && !isNaN(cleanNumber(col1)) && cleanNumber(col1) > 0 && result[currentLembaga] && result[currentLembaga].total === 0) {
             result[currentLembaga].total = cleanNumber(col1);
             continue;
         }
 
-        // ── Baris BULAN ────────────────────────────────────
         if (col1.toUpperCase() === 'BULAN') {
             var bulanVal = (cols[2] || '').trim();
             if (bulanVal) result[currentLembaga].bulan = bulanVal;
             continue;
         }
 
-        // ── Baris Header transaksi (TANGGAL, NAMA, NOMINAL) ─
         if (col1.toUpperCase() === 'TANGGAL') {
             inTransaksi = true;
             continue;
         }
 
-        // ── Baris data transaksi ─────────────────────────────
         if (inTransaksi && col1 !== '' && col1.toUpperCase() !== 'NAMA' && col1.toUpperCase() !== 'TOTAL WAKAF') {
             var noTrx  = col0 || '';
             var tgl    = col1;
             var nama   = (cols[2] || '').trim();
             var nominal = cleanNumber(cols[3] || '');
 
-            // Validasi: tanggal harus mengandung angka dan '-' atau '/'
             if (tgl.match(/\d{2}[-\/]\d{2}[-\/]\d{4}/) && nominal > 0) {
                 result[currentLembaga].transaksi.push({
                     no: noTrx,
@@ -716,11 +783,9 @@ function parseCSV(csvText) {
             }
         }
     }
-
     return result;
 }
 
-// ── Simple CSV line splitter (handles quoted fields) ────────
 function splitCSVLine(line) {
     var result = [];
     var field = '';
@@ -746,22 +811,29 @@ var DIRECT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJ
 function onCSVLoaded(csvText, source) {
     var strip = document.getElementById('loading-strip');
     strip.style.display = 'none';
-    console.log('[CSV:' + source + '] panjang:', csvText.length);
-    // Jika content terlihat seperti HTML (error page), tolak
     if (csvText.trimStart().startsWith('<')) {
         throw new Error('Bukan CSV, mungkin error page HTML');
     }
     ALL_DATA = parseCSVText(csvText);
     var keys = Object.keys(ALL_DATA);
-    console.log('[CSV:' + source + '] Lembaga:', keys.length, keys);
     LEMBAGA_LIST = keys.sort();
     csvLoaded = true;
     var q = document.getElementById('search-input').value.trim();
     if (q.length >= 2) doSearch(q);
+
+    if (currentName) {
+        showLembaga(currentName);
+    }
+    var btn = document.getElementById('btn-sync');
+    if (btn) {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    }
 }
 
-function fetchViaProxy() {
-    return fetch(CSV_URL)
+function fetchViaProxy(url) {
+    url = url || CSV_URL;
+    return fetch(url)
         .then(function(res) {
             if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
             return res.text();
@@ -771,8 +843,9 @@ function fetchViaProxy() {
         });
 }
 
-function fetchDirect() {
-    return fetch(DIRECT_CSV_URL)
+function fetchDirect(url) {
+    url = url || DIRECT_CSV_URL;
+    return fetch(url)
         .then(function(res) {
             if (!res.ok) throw new Error('Direct HTTP ' + res.status);
             return res.text();
@@ -788,16 +861,23 @@ function fetchViaPapaParse(url, label) {
             download: true,
             skipEmptyLines: false,
             complete: function(results) {
-                console.log('[PapaParse:' + label + '] rows:', results.data.length);
                 var strip = document.getElementById('loading-strip');
                 strip.style.display = 'none';
                 ALL_DATA = parseCSVDirect(results.data);
                 var keys = Object.keys(ALL_DATA);
-                console.log('[PapaParse:' + label + '] Lembaga:', keys.length, keys);
                 LEMBAGA_LIST = keys.sort();
                 csvLoaded = true;
                 var q = document.getElementById('search-input').value.trim();
                 if (q.length >= 2) doSearch(q);
+
+                if (currentName) {
+                    showLembaga(currentName);
+                }
+                var btn = document.getElementById('btn-sync');
+                if (btn) {
+                    btn.classList.remove('spinning');
+                    btn.disabled = false;
+                }
                 resolve();
             },
             error: function(err) { reject(err); }
@@ -810,33 +890,58 @@ function showLoadError() {
     strip.style.display = 'block';
     strip.style.color = '#f8b4b4';
     strip.innerHTML = '<i class="bx bx-error-circle"></i> Gagal memuat data. Coba muat ulang halaman.';
+
+    var btn = document.getElementById('btn-sync');
+    if (btn) {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    }
 }
 
-function fetchCSV() {
+function fetchCSV(force) {
     var strip = document.getElementById('loading-strip');
     strip.style.display = 'block';
+    strip.style.color = '';
+    strip.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Memuat data dari Google Sheets...";
+
+    var t = force ? '?t=' + Date.now() : '';
+    var tDirect = force ? '&t=' + Date.now() : '';
+
+    var proxyUrl = 'csv_proxy.php' + t;
+    var directUrl = DIRECT_CSV_URL + tDirect;
 
     // Coba 1: PHP proxy (hindari CORS/redirect Google Sheets)
-    fetchViaProxy()
+    fetchViaProxy(proxyUrl)
         .catch(function(err1) {
             console.warn('[CSV] Proxy gagal:', err1.message, '— coba direct fetch...');
             // Coba 2: fetch langsung ke Google Sheets
-            return fetchDirect();
+            return fetchDirect(directUrl);
         })
         .catch(function(err2) {
             console.warn('[CSV] Direct gagal:', err2.message, '— coba PapaParse proxy...');
             // Coba 3: PapaParse via proxy
-            return fetchViaPapaParse(CSV_URL, 'proxy');
+            return fetchViaPapaParse(proxyUrl, 'proxy');
         })
         .catch(function(err3) {
             console.warn('[CSV] PapaParse proxy gagal:', err3.message, '— coba PapaParse direct...');
             // Coba 4: PapaParse langsung
-            return fetchViaPapaParse(DIRECT_CSV_URL, 'direct');
+            return fetchViaPapaParse(directUrl, 'direct');
         })
         .catch(function(err4) {
             console.error('[CSV] Semua metode gagal:', err4);
             showLoadError();
         });
+}
+
+function syncData() {
+    var btn = document.getElementById('btn-sync');
+    if (!btn) return;
+    if (btn.classList.contains('spinning')) return;
+
+    btn.classList.add('spinning');
+    btn.disabled = true;
+
+    fetchCSV(true);
 }
 
 // ── Parse dari raw CSV text (metode utama, lebih handal) ────
@@ -1292,25 +1397,40 @@ function renderTable() {
     if (!pgWrap) return;
 
     var pgInfo = 'Menampilkan ' + (start+1) + '–' + end + ' dari ' + total + ' transaksi';
-    var pgHtml = '<span class="pg-info">' + pgInfo + '</span><div class="pg-btns">';
+    
+    // Row select HTML
+    var selectHtml = '<div class="row-select-wrap">' +
+        '<label for="row-select">Tampilkan:</label>' +
+        '<select id="row-select" onchange="changeRowsPerPage(this.value)">' +
+            '<option value="25"' + (ROWS_PER_PAGE === 25 ? ' selected' : '') + '>25 baris</option>' +
+            '<option value="50"' + (ROWS_PER_PAGE === 50 ? ' selected' : '') + '>50 baris</option>' +
+            '<option value="100"' + (ROWS_PER_PAGE === 100 ? ' selected' : '') + '>100 baris</option>' +
+            '<option value="all"' + (ROWS_PER_PAGE >= 999999 ? ' selected' : '') + '>Semua</option>' +
+        '</select>' +
+    '</div>';
 
-    pgHtml += '<button class="pg-btn" onclick="changePage(' + (currentPage-1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="bx bx-chevron-left"></i></button>';
+    var pgHtml = '<span class="pg-info">' + pgInfo + '</span>' + selectHtml;
 
-    // Page number buttons
-    var startPg = Math.max(1, currentPage - 2);
-    var endPg   = Math.min(totalPages, currentPage + 2);
-    if (startPg > 1) pgHtml += '<button class="pg-btn" onclick="changePage(1)">1</button>';
-    if (startPg > 2) pgHtml += '<span style="color:#aab;padding:0 4px;">…</span>';
+    if (totalPages > 1) {
+        pgHtml += '<div class="pg-btns">';
+        pgHtml += '<button class="pg-btn" onclick="changePage(' + (currentPage-1) + ')" ' + (currentPage <= 1 ? 'disabled' : '') + '><i class="bx bx-chevron-left"></i></button>';
 
-    for (var p = startPg; p <= endPg; p++) {
-        pgHtml += '<button class="pg-btn' + (p === currentPage ? ' active' : '') + '" onclick="changePage(' + p + ')">' + p + '</button>';
+        // Page number buttons
+        var startPg = Math.max(1, currentPage - 2);
+        var endPg   = Math.min(totalPages, currentPage + 2);
+        if (startPg > 1) pgHtml += '<button class="pg-btn" onclick="changePage(1)">1</button>';
+        if (startPg > 2) pgHtml += '<span style="color:#aab;padding:0 4px;">…</span>';
+
+        for (var p = startPg; p <= endPg; p++) {
+            pgHtml += '<button class="pg-btn' + (p === currentPage ? ' active' : '') + '" onclick="changePage(' + p + ')">' + p + '</button>';
+        }
+
+        if (endPg < totalPages - 1) pgHtml += '<span style="color:#aab;padding:0 4px;">…</span>';
+        if (endPg < totalPages) pgHtml += '<button class="pg-btn" onclick="changePage(' + totalPages + ')">' + totalPages + '</button>';
+
+        pgHtml += '<button class="pg-btn" onclick="changePage(' + (currentPage+1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="bx bx-chevron-right"></i></button>';
+        pgHtml += '</div>';
     }
-
-    if (endPg < totalPages - 1) pgHtml += '<span style="color:#aab;padding:0 4px;">…</span>';
-    if (endPg < totalPages) pgHtml += '<button class="pg-btn" onclick="changePage(' + totalPages + ')">' + totalPages + '</button>';
-
-    pgHtml += '<button class="pg-btn" onclick="changePage(' + (currentPage+1) + ')" ' + (currentPage >= totalPages ? 'disabled' : '') + '><i class="bx bx-chevron-right"></i></button>';
-    pgHtml += '</div>';
 
     pgWrap.innerHTML = pgHtml;
 }
@@ -1322,6 +1442,16 @@ function changePage(p) {
     currentPage = p;
     renderTable();
     document.getElementById('result-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function changeRowsPerPage(val) {
+    if (val === 'all') {
+        ROWS_PER_PAGE = 999999;
+    } else {
+        ROWS_PER_PAGE = parseInt(val, 10);
+    }
+    currentPage = 1;
+    renderTable();
 }
 
 // ── Icon helper ───────────────────────────────────────────────
