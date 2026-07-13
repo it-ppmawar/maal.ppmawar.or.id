@@ -1278,7 +1278,9 @@ function showLembaga(name) {
 
     // Stats
     html += '<div class="stats-bar">' +
-        '<div class="stat-item"><div class="stat-label">Total Akumulasi</div><div class="stat-value green">' + formatRp(total) + '</div></div>' +
+        '<div class="stat-item"><div class="stat-label">Total Akumulasi</div><div class="stat-value green" style="font-size:1.55rem; margin-top:2px;">' + formatRp(total) + '</div></div>' +
+    '</div>' +
+    '<div class="stats-bar">' +
         '<div class="stat-item"><div class="stat-label">Jumlah Transaksi</div><div class="stat-value">' + jmlTrx.toLocaleString('id') + '</div></div>' +
         '<div class="stat-item"><div class="stat-label">Rata-rata / Trx</div><div class="stat-value gold">' + (jmlTrx > 0 ? formatRp(total / jmlTrx) : '-') + '</div></div>' +
     '</div>';
