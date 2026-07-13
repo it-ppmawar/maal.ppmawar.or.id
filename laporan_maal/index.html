@@ -351,9 +351,11 @@
         /* Stats bar */
         .stats-bar {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 0;
             border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .stat-item {
             flex: 1;
@@ -395,9 +397,9 @@
         .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 0 20px; }
         table.trx-table {
             width: 100%;
+            min-width: 550px;
             border-collapse: collapse;
             font-size: .83rem;
-            table-layout: fixed;
         }
         table.trx-table thead tr {
             background: linear-gradient(90deg, var(--navy) 0%, var(--navy3) 100%);
@@ -445,18 +447,9 @@
 
         /* Mobile table adjustments */
         @media (max-width: 540px) {
-            table.trx-table { font-size: .76rem; }
+            table.trx-table { font-size: .76rem; min-width: 500px; }
             table.trx-table td, table.trx-table thead th { padding: 7px 8px; }
-            table.trx-table thead th:nth-child(1) { width: 32px; }
-            table.trx-table thead th:nth-child(2) { width: 84px; }
-            table.trx-table thead th:nth-child(4) { width: 100px; }
             .tgl-badge { font-size: .68rem; padding: 2px 4px; }
-            table.trx-table td:nth-child(3) {
-                max-width: 100px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
         }
 
         /* Pagination */
@@ -531,15 +524,9 @@
         /* ══ Responsive ════════════════════════════════════════════ */
         @media (max-width: 600px) {
             .card-header-lembaga { flex-direction: column; text-align: center; }
-            .stats-bar { flex-direction: column; }
             .stat-item {
-                border-right: none;
-                border-bottom: 1px solid var(--border);
-                width: 100%;
                 padding: 12px 16px;
-                text-align: center;
             }
-            .stat-item:last-child { border-bottom: none; }
             .search-card { padding: 20px 16px 18px; }
         }
         @media (max-width: 480px) {
@@ -1119,6 +1106,66 @@ function parseCSVDirect(rows) {
     return result;
 }
 
+// ── Sort logic ─────────────────────────────────────────────
+var currentSort = { col: -1, dir: 'asc' };
+
+function getSortIcon(col) {
+    if (currentSort.col !== col) return '<i class="bx bx-sort" style="color:rgba(255,255,255,0.4); font-size:12px; margin-left:4px;"></i>';
+    return currentSort.dir === 'asc' 
+        ? '<i class="bx bx-sort-up" style="color:var(--gold); font-size:12px; margin-left:4px;"></i>' 
+        : '<i class="bx bx-sort-down" style="color:var(--gold); font-size:12px; margin-left:4px;"></i>';
+}
+
+function renderTableHeader() {
+    return '<tr>' +
+        '<th onclick="sortTable(0)" style="cursor:pointer; white-space:nowrap; text-align:center; width:50px;">No ' + getSortIcon(0) + '</th>' +
+        '<th onclick="sortTable(1)" style="cursor:pointer; white-space:nowrap; width:110px;">Tanggal ' + getSortIcon(1) + '</th>' +
+        '<th onclick="sortTable(2)" style="cursor:pointer; white-space:nowrap; width:auto;">Nama Wakif ' + getSortIcon(2) + '</th>' +
+        '<th onclick="sortTable(3)" style="cursor:pointer; white-space:nowrap; text-align:right; width:130px;">Nominal ' + getSortIcon(3) + '</th>' +
+    '</tr>';
+}
+
+function sortTable(col) {
+    if (currentSort.col === col) {
+        currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.col = col;
+        currentSort.dir = 'asc';
+    }
+    
+    var trx = currentData.transaksi;
+    trx.sort(function(a, b) {
+        var valA, valB;
+        if (col === 0) { // No
+            valA = parseInt(a.no) || 0;
+            valB = parseInt(b.no) || 0;
+        } else if (col === 1) { // Tanggal
+            function parseTgl(t) {
+                if(!t) return 0;
+                var parts = t.split(/[-\/]/);
+                if(parts.length < 3) return 0;
+                return new Date(parts[2], parts[1]-1, parts[0]).getTime();
+            }
+            valA = parseTgl(a.tgl);
+            valB = parseTgl(b.tgl);
+        } else if (col === 2) { // Nama
+            valA = (a.nama || '').toUpperCase();
+            valB = (b.nama || '').toUpperCase();
+        } else if (col === 3) { // Nominal
+            valA = parseFloat(a.nominal) || 0;
+            valB = parseFloat(b.nominal) || 0;
+        }
+        
+        if (valA < valB) return currentSort.dir === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    document.getElementById('trx-thead').innerHTML = renderTableHeader();
+    currentPage = 1;
+    renderTable();
+}
+
 // ── Search logic ─────────────────────────────────────────────
 function doSearch(q) {
     q = q.trim();
@@ -1247,10 +1294,11 @@ function showLembaga(name) {
     html += '<div class="table-section">' +
         '<div class="section-title"><i class="bx bx-list-ul"></i>Riwayat Transaksi Penerimaan</div>';
 
+    // Reset sort state when showing new lembaga
+    currentSort = { col: -1, dir: 'asc' };
+
     // Build table
-    html += '<div class="table-responsive"><table class="trx-table"><thead><tr>' +
-        '<th>No</th><th>Tanggal</th><th>Nama Wakif</th><th>Nominal</th>' +
-    '</tr></thead><tbody id="trx-tbody"></tbody>' +
+    html += '<div class="table-responsive"><table class="trx-table"><thead id="trx-thead">' + renderTableHeader() + '</thead><tbody id="trx-tbody"></tbody>' +
     '<tfoot><tr class="tfoot-row">' +
         '<td colspan="3" style="text-align:right;padding-right:14px;">Total Penerimaan</td>' +
         '<td>' + formatRpFull(total) + '</td>' +
