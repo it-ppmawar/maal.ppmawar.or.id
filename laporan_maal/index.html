@@ -86,24 +86,24 @@
 
         /* Sync Button */
         .sync-btn {
-            background: rgba(42, 157, 143, 0.12);
-            border: 1.5px solid var(--teal);
-            color: var(--teal);
+            background: rgba(255,255,255,0.1);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            color: #fff;
             font-family: 'Poppins', sans-serif;
-            font-size: .8rem;
-            font-weight: 600;
+            font-size: .85rem;
+            font-weight: 500;
             border-radius: 50px;
-            padding: 5px 12px;
+            padding: 8px 18px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             cursor: pointer;
             transition: all .25s ease;
             outline: none;
         }
         .sync-btn:hover:not(:disabled) {
-            background: var(--teal);
-            color: #fff;
+            background: rgba(255,255,255,0.25);
+            border-color: #fff;
         }
         .sync-btn:disabled {
             opacity: .6;
@@ -548,9 +548,6 @@
     <div class="top-bar-inner">
         <a href="https://maal.ppmawar.or.id" class="brand">MAAL <span>KSPPS MAWAR</span></a>
         <div style="display: flex; gap: 8px; align-items: center;">
-            <button onclick="syncData()" class="sync-btn" id="btn-sync" title="Sinkronisasi Data Google Sheets">
-                <i class='bx bx-refresh'></i><span> Sinkronkan</span>
-            </button>
             <a href="https://maal.ppmawar.or.id" class="back-link">
                 <i class='bx bx-arrow-back'></i> Kembali<span class="hide-mobile"> ke Beranda</span>
             </a>
@@ -587,6 +584,12 @@
             <i class='bx bx-shield-quarter'></i>
             Data bersifat privat — hanya tampil setelah nama lembaga dimasukkan
         </div>
+    </div>
+
+    <div style="margin-top: 24px; text-align: center;">
+        <button onclick="syncData()" class="sync-btn" id="btn-sync" title="Sinkronisasi Data Google Sheets">
+            <i class='bx bx-refresh'></i><span> Sinkronkan Data Terbaru</span>
+        </button>
     </div>
 </section>
 
@@ -637,8 +640,8 @@ var currentName  = '';
 // ── Format helpers ─────────────────────────────────────────
 function formatRp(val) {
     val = parseFloat(val) || 0;
-    if (val >= 1e9) return 'Rp\u00a0' + (val/1e9).toFixed(3).replace('.',',') + '\u00a0M';
-    if (val >= 1e6) return 'Rp\u00a0' + (val/1e6).toFixed(3).replace('.',',') + '\u00a0Jt';
+    if (val >= 1e9) return 'Rp\u00a0' + (val/1e9).toFixed(1).replace('.',',') + '\u00a0M';
+    if (val >= 1e6) return 'Rp\u00a0' + (val/1e6).toFixed(1).replace('.',',') + '\u00a0Jt';
     return 'Rp\u00a0' + val.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 function formatRpFull(val) {
