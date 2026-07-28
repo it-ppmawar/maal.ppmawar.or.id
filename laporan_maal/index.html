@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Penerimaan Wakaf Uang per Lembaga – laporan.maal.ppmawar.or.id</title>
-    <meta name="description" content="Laporan detail penerimaan dan perkembangan wakaf uang per lembaga aktif KSPPS MAWAR Karanggeneng">
+    <title>Laporan Penerimaan Wakaf Uang Tiap Lembaga - laporan.maal.ppmawar.or.id</title>
+    <meta name="description" content="Laporan detail penerimaan dan perkembangan wakaf uang per lembaga KSPPS MAWAR Karanggeneng">
     <meta name="robots" content="noindex, nofollow">
     <link rel="canonical" href="https://laporan.maal.ppmawar.or.id/">
 
@@ -100,6 +100,8 @@
             cursor: pointer;
             transition: all .25s ease;
             outline: none;
+            position: relative;
+            z-index: 2;
         }
         .sync-btn:hover:not(:disabled) {
             background: rgba(255,255,255,0.25);
@@ -381,6 +383,10 @@
             gap: 7px;
             text-transform: uppercase;
             letter-spacing: .5px;
+            white-space: nowrap;
+        }
+        .section-title > * {
+            flex-shrink: 0;
         }
         .section-title i { color: var(--teal); font-size: 1rem; }
         .chart-wrap {
@@ -394,7 +400,13 @@
 
         /* Table section */
         .table-section { padding: 16px 0 0; }
-        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 0 20px; }
+        .table-responsive {
+            display: flex;
+            flex-direction: column;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 0 20px;
+        }
         table.trx-table {
             width: 100%;
             min-width: 550px;
@@ -539,6 +551,583 @@
             .brand { font-size: .88rem; }
             .back-link { font-size: .70rem; }
         }
+        /* ══ Donor Detail ═══════════════════════════════════════ */
+        .donor-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(26,45,79,.1);
+            padding: 28px 24px 24px;
+            margin-top: 20px;
+        }
+        .donor-loading {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+        .donor-loading i { font-size: 1.8rem; display: block; margin-bottom: 8px; color: var(--teal); }
+        .donor-table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+        .donor-table th {
+            background: var(--navy);
+            color: #fff;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .donor-table th:last-child { text-align: right; }
+        .donor-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .donor-table td:last-child { text-align: right; font-weight: 600; color: var(--navy3); }
+        .donor-table tbody tr:hover td { background: rgba(42,157,143,.06); }
+        .donor-table tfoot td { background: var(--light); font-weight: 600; font-size:.85rem; }
+        .donor-pg-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+            font-size: .82rem;
+            color: var(--muted);
+        }
+        .donor-empty { text-align:center; padding:28px; color:var(--muted); font-size:.88rem; }
+        .donor-empty i { font-size:2rem; display:block; margin-bottom:8px; color:var(--border); }
+        /* Donor Stats Bar */
+        .donor-stats-bar {
+            display: flex;
+            flex-wrap: nowrap;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 4px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .donor-stat-item {
+            flex: 1;
+            min-width: 120px;
+            padding: 14px 18px;
+            border-right: 1px solid var(--border);
+            text-align: center;
+        }
+        .donor-stat-item:last-child { border-right: none; }
+        .donor-stat-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+        .donor-stat-value { font-size: 1rem; font-weight: 700; color: var(--navy); }
+        .donor-stat-value.teal { color: var(--teal); }
+        .donor-stat-value.gold { color: #c77f00; }
+
+        /* ══ Certificate Preview Section ════════════════════════ */
+        .cert-card {
+            background: #fdfcf9;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 6px 24px rgba(26,45,79,.06);
+            padding: 10px;
+            margin-top: 24px;
+            animation: slideUp .35s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .cert-card-inner {
+            border: 1.5px solid #d4af37;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #fdfcf9;
+            position: relative;
+        }
+        .cert-watermark {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            font-size: 8rem;
+            color: rgba(233, 196, 106, 0.05);
+            pointer-events: none;
+            user-select: none;
+        }
+        .cert-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 28px;
+            align-items: center;
+        }
+        .cert-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .cert-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #b89020;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .cert-tag i {
+            font-size: 0.9rem;
+        }
+        .cert-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(0.95rem, 4.5vw, 1.45rem);
+            color: var(--navy);
+            font-weight: 700;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cert-desc {
+            font-size: 0.84rem;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .cert-desc em {
+            font-weight: 600;
+            color: var(--navy3);
+            font-style: normal;
+        }
+        .cert-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-cert-primary {
+            background: var(--navy);
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1.5px solid var(--navy);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+        .btn-cert-primary:hover {
+            background: var(--navy3);
+            border-color: var(--navy3);
+            transform: translateY(-2px);
+        }
+        .btn-cert-secondary {
+            background: rgba(233,196,106,0.12);
+            color: #a37c1a;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1.5px solid rgba(233,196,106,0.4);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+        .btn-cert-secondary:hover {
+            background: rgba(233,196,106,0.25);
+            transform: translateY(-2px);
+        }
+        .cert-preview-box {
+            position: relative;
+            background: #fff;
+            border-radius: 12px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+            cursor: pointer;
+            overflow: hidden;
+            aspect-ratio: 1.414 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .cert-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: transform 0.5s ease;
+        }
+        .cert-preview-box:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 8px 30px rgba(26,45,79,0.15);
+            border-color: rgba(233,196,106,0.6);
+        }
+        .cert-preview-box:hover img {
+            transform: scale(1.04);
+        }
+        .cert-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(26,45,79,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+        .cert-preview-box:hover .cert-overlay {
+            opacity: 1;
+        }
+        .cert-overlay-inner {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(8px);
+            padding: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.4);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cert-preview-box:hover .cert-overlay-inner {
+            transform: scale(1);
+        }
+        .cert-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 20, 38, 0.88);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+        .cert-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .cert-modal-container {
+            width: 100%;
+            max-width: 960px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 85vh;
+            max-height: 700px;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .cert-modal.active .cert-modal-container {
+            transform: scale(1);
+        }
+        .cert-modal-header {
+            padding: 16px 24px;
+            background: var(--navy);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1.5px solid rgba(255,255,255,0.1);
+        }
+        .cert-modal-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+        .cert-modal-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.6rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+        }
+        .cert-modal-close:hover {
+            color: #fff;
+        }
+        .cert-modal-body {
+            flex: 1;
+            background: #f0f3f8;
+            position: relative;
+        }
+        .cert-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .cert-modal-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f3f8;
+            color: var(--navy);
+            font-size: 1.1rem;
+            transition: opacity 0.3s ease;
+        }
+        .cert-modal-loader i {
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            font-size: 1.5rem;
+        }
+        @media (max-width: 600px) {
+            .cert-card {
+                margin-top: 14px;
+                border-radius: 12px;
+            }
+            .cert-card-inner {
+                padding: 16px 14px;
+            }
+            .cert-watermark {
+                font-size: 4rem;
+                right: 10px;
+                bottom: 8px;
+            }
+            .cert-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+            /* Pada mobile: preview box tampil sebagai strip horizontal di bawah info */
+            .cert-preview-box {
+                aspect-ratio: unset;
+                height: 160px;
+                width: 100%;
+                border-radius: 10px;
+            }
+            .cert-preview-box img {
+                object-fit: cover;
+                width: 100%;
+                height: 100%;
+            }
+            .cert-tag {
+                font-size: 0.65rem;
+                padding: 3px 10px;
+            }
+            .cert-title {
+                font-size: clamp(0.85rem, 4.2vw, 1.15rem);
+                line-height: 1.3;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .cert-desc {
+                font-size: 0.8rem;
+                line-height: 1.5;
+            }
+            .cert-actions {
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 4px;
+            }
+            .btn-cert-primary,
+            .btn-cert-secondary {
+                width: 100%;
+                justify-content: center;
+                padding: 11px 14px;
+                font-size: 0.82rem;
+                border-radius: 8px;
+            }
+            .cert-modal-container {
+                border-radius: 12px;
+                height: 82vh;
+                max-height: unset;
+            }
+            .cert-modal {
+                padding: 12px;
+                align-items: flex-end;
+            }
+            .cert-modal-header {
+                padding: 12px 16px;
+            }
+            .cert-modal-title {
+                font-size: 0.95rem;
+            }
+        }
+        /* ── Certificate Card ─────────────────────────────────── */
+        .cert-card {
+            margin-top: 18px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(15,30,60,0.10), 0 0 0 1.5px rgba(180,150,80,0.18);
+            background: linear-gradient(135deg, #fffdf5 0%, #fdf6e3 60%, #f5edcc 100%);
+            border: 1.5px solid rgba(180,145,55,0.22);
+            position: relative;
+        }
+        .cert-card-inner {
+            padding: 26px 28px;
+            position: relative;
+        }
+        .cert-watermark {
+            position: absolute;
+            right: 18px;
+            bottom: 14px;
+            font-size: 5.5rem;
+            color: rgba(180,145,55,0.07);
+            pointer-events: none;
+            user-select: none;
+            line-height: 1;
+        }
+        .cert-grid {
+            display: grid;
+            grid-template-columns: 1fr 180px;
+            gap: 20px;
+            align-items: center;
+        }
+        .cert-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .cert-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #9a7d2a;
+            background: rgba(180,145,55,0.12);
+            border: 1px solid rgba(180,145,55,0.25);
+            border-radius: 50px;
+            padding: 4px 12px;
+            width: fit-content;
+        }
+        .cert-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(0.95rem, 4.5vw, 1.4rem);
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cert-desc {
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .cert-actions {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+        .btn-cert-primary,
+        .btn-cert-secondary {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 9px;
+            padding: 11px 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+        }
+        .btn-cert-primary {
+            background: linear-gradient(135deg, #1a3a5c, #0d2a45);
+            color: #fff;
+            border: none;
+            box-shadow: 0 3px 12px rgba(15,30,60,0.2);
+        }
+        .btn-cert-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(15,30,60,0.25);
+        }
+        .btn-cert-secondary {
+            background: transparent;
+            color: #9a7d2a;
+            border: 1.5px solid rgba(154,125,42,0.4);
+        }
+        .btn-cert-secondary:hover {
+            background: rgba(154,125,42,0.08);
+            border-color: rgba(154,125,42,0.65);
+        }
+        .cert-preview-box {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            height: 200px;
+            flex-shrink: 0;
+            cursor: pointer;
+            background: #e8dfc0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12), 0 0 0 1.5px rgba(180,145,55,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cert-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        .cert-preview-box:hover img {
+            transform: scale(1.03);
+        }
+        .cert-preview-box.no-image img {
+            display: none;
+        }
+        .cert-fallback-template {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            text-align: center;
+            color: #9a7d2a;
+        }
+        .cert-preview-box.no-image .cert-fallback-template {
+            display: flex;
+        }
+        .cert-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 20, 40, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.25s ease;
+        }
+        .cert-preview-box:hover .cert-overlay {
+            background: rgba(10, 20, 40, 0.45);
+        }
+        .cert-overlay-inner {
+            color: #fff;
+            font-size: 2rem;
+            opacity: 0;
+            transform: scale(0.7);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .cert-preview-box:hover .cert-overlay-inner {
+            opacity: 1;
+            transform: scale(1);
+        }
     </style>
 </head>
 <body>
@@ -558,7 +1147,7 @@
 <!-- ── Hero + Search ──────────────────────────────────────── -->
 <section class="hero">
     <h1 class="hero-title">Laporan Penerimaan Wakaf Uang</h1>
-    <p class="hero-sub">Detail penerimaan & perkembangan per lembaga aktif · KSPPS MAWAR Karanggeneng</p>
+    <p class="hero-sub">Detail penerimaan & perkembangan tiap lembaga · KSPPS MAWAR JATIM</p>
 
     <div class="search-card">
         <div class="search-label"><i class='bx bx-buildings'></i> Masukkan nama lembaga untuk melihat laporan</div>
@@ -611,13 +1200,32 @@
 
     <!-- Result area -->
     <div id="result-area" style="display:none;"></div>
+    <div id="donor-area"></div>
 
 </main>
 
 <!-- ── Footer ─────────────────────────────────────────────── -->
 <footer class="page-footer">
-    &copy; <strong>MAAL KSPPS MAWAR</strong> Karanggeneng &mdash; Laporan Penerimaan Wakaf Uang per Lembaga
+    &copy; <strong>MAAL KSPPS MAWAR</strong> Karanggeneng &mdash; Laporan Penerimaan Wakaf Uang Tiap Lembaga
 </footer>
+
+<!-- ── Certificate Modal ────────────────────────────────────── -->
+<div id="cert-modal" class="cert-modal">
+    <div class="cert-modal-container">
+        <div class="cert-modal-header">
+            <div class="cert-modal-title" id="cert-modal-title">Sertifikat Wakaf Uang</div>
+            <button class="cert-modal-close" onclick="closeCertModal()" title="Tutup pratinjau">
+                <i class="bx bx-x"></i>
+            </button>
+        </div>
+        <div class="cert-modal-body">
+            <div class="cert-modal-loader" id="cert-modal-loader">
+                <i class="bx bx-loader-alt"></i> Memuat pratinjau sertifikat...
+            </div>
+            <iframe id="cert-iframe" class="cert-iframe" src="" onload="onCertIframeLoad()"></iframe>
+        </div>
+    </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════
      JAVASCRIPT
@@ -630,12 +1238,58 @@ var ROWS_PER_PAGE = 25;
 
 // ── State ────────────────────────────────────────────────────
 var ALL_DATA     = {};   // { namaLembaga: { total, bulan, transaksi:[] } }
+var CERT_DATA    = {};   // certificate data from cert_links.json
 var LEMBAGA_LIST = [];   // sorted list of lembaga names
 var csvLoaded    = false;
 var currentChart = null;
 var currentPage  = 1;
 var currentData  = null; // currently displayed lembaga data
 var currentName  = '';
+
+// ── Sheet GID Map: nomor baris CSV2 → gid sheet detail donatur ─
+var CSV2_ROW_TO_GID = {
+    10:'815882114', 11:'692127026', 17:'1033221722', 18:'2041381285',
+    41:'880015158', 45:'46867664',  48:'0',          52:'1353982802',
+    56:'1645598484',57:'1039694087',60:'191573258',  61:'266769621',
+    62:'2105138912',63:'154288844', 64:'1089541906', 65:'1817395424',
+    66:'1461444370',67:'417334554', 68:'1605777175', 69:'1860197928',
+    70:'1017191582',71:'1045001837',72:'849697066',  73:'608032516',
+    74:'1480201920',75:'1537156219',76:'154071510',  77:'1763681551',
+    78:'1578797073',79:'7345578',   80:'1578635629', 81:'1748260230',
+    82:'1334635358',83:'493324393', 84:'10164437',   85:'85518130',
+    86:'2062048297',87:'333525895', 88:'1961650162', 89:'1353132146',
+    90:'1413048939',91:'781470666', 92:'1886865352', 93:'1460701178',
+    94:'1411634932',95:'1950779001',96:'2111356193', 97:'2059491987',
+    98:'1646400826',99:'39426388', 100:'782360893', 101:'1769728255',
+    102:'1189786236',103:'1188232546',104:'336576616',105:'416558803'
+};
+var CSV2_NAME_TO_GID = {};
+
+function getGidForLembaga(name, rowNo) {
+    if (!name) return null;
+    var upperName = name.toUpperCase().trim();
+    var withoutWakaf = upperName.replace(/^WAKAF\s+/, '').trim();
+    var withWakaf = 'WAKAF ' + withoutWakaf;
+
+    // Gunakan hasOwnProperty + typeof agar GID '0' (valid!) tidak terfilter
+    function hasGid(map, key) { return map.hasOwnProperty(key) && map[key] !== null && map[key] !== undefined && map[key] !== ''; }
+
+    if (hasGid(CSV2_NAME_TO_GID, upperName))    return CSV2_NAME_TO_GID[upperName];
+    if (hasGid(CSV2_NAME_TO_GID, withWakaf))    return CSV2_NAME_TO_GID[withWakaf];
+    if (hasGid(CSV2_NAME_TO_GID, withoutWakaf)) return CSV2_NAME_TO_GID[withoutWakaf];
+    if (rowNo && CSV2_ROW_TO_GID.hasOwnProperty(rowNo) && CSV2_ROW_TO_GID[rowNo] !== '') {
+        return CSV2_ROW_TO_GID[rowNo];
+    }
+
+    return null;
+}
+
+var DONOR_CACHE      = {}; // cache detail donatur per gid
+var currentDonorPage = 1;
+var DONOR_PER_PAGE   = 25;
+var forceFreshDonor  = false;
+var donorSort        = { col: -1, dir: 'asc' }; // col: 0=No,1=Tgl,2=Nama,3=Nominal
+
 
 // ── Format helpers ─────────────────────────────────────────
 function formatRp(val) {
@@ -651,36 +1305,29 @@ function formatRpFull(val) {
 function cleanNumber(str) {
     if (!str) return 0;
     var s = String(str).trim();
-    // Hapus semua karakter kecuali digit, koma, titik
+    // Pertahankan tanda negatif (misal pengeluaran/pemindahan)
+    var isNeg = s.charAt(0) === '-';
     // Format Indonesia: 74.153.000 (titik) atau 74,153,000 (koma)
-    // Deteksi: jika ada titik DAN koma, yang terakhir adalah desimal
-    // Jika hanya titik: mungkin ribuan (misal 74.153.000)
     var hasDot   = s.indexOf('.') !== -1;
     var hasComma = s.indexOf(',') !== -1;
     if (hasDot && hasComma) {
-        // Format: 1.234.567,89 → hapus titik, ganti koma jadi titik
         var lastComma = s.lastIndexOf(',');
         var lastDot   = s.lastIndexOf('.');
         if (lastDot > lastComma) {
-            // titik sebagai desimal: 1,234,567.89
             s = s.replace(/,/g, '');
         } else {
-            // koma sebagai desimal: 1.234.567,89
             s = s.replace(/\./g, '').replace(',', '.');
         }
     } else if (hasDot) {
-        // Bisa ribuan (74.153.000) atau desimal (3.14)
         var parts = s.split('.');
         if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
-            // ribuan: hapus titik
             s = s.replace(/\./g, '');
         }
-        // else biarkan sebagai float
     } else if (hasComma) {
-        // Koma sebagai ribuan: 74,153,000
         s = s.replace(/,/g, '');
     }
-    return parseFloat(s.replace(/[^\d.]/g, '')) || 0;
+    var result = parseFloat(s.replace(/[^\d.]/g, '')) || 0;
+    return isNeg ? -result : result;
 }
 function fmtTgl(str) {
     if (!str) return '-';
@@ -688,6 +1335,31 @@ function fmtTgl(str) {
     var parts = str.trim().split(/[-\/]/);
     if (parts.length === 3) return parts[0] + '/' + parts[1] + '/' + parts[2];
     return str;
+}
+
+function copyToClipboard(text) {
+    if (!navigator.clipboard) {
+        // Fallback untuk browser jadul / non-HTTPS
+        var el = document.createElement('textarea');
+        el.value = text;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        try {
+            document.execCommand('copy');
+            alert('Nomor VA berhasil disalin: ' + text);
+        } catch (err) {
+            console.error('Gagal menyalin text: ', err);
+        }
+        document.body.removeChild(el);
+        return;
+    }
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Nomor VA berhasil disalin: ' + text);
+    }).catch(function(err) {
+        console.error('Gagal menyalin text: ', err);
+    });
 }
 
 // ── Parse CSV ───────────────────────────────────────────────
@@ -796,7 +1468,10 @@ function splitCSVLine(line) {
 }
 
 // ── Fetch CSV ───────────────────────────────────────────────
-var DIRECT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=39941645&single=true&output=csv';
+var DIRECT_CSV_URLS = [
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=405205981&single=true&output=csv',
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIHXx0HPCr1L-tIzO4TqzwdtzWlFq2ZCO7aTVgyFX0jM3fvqnF8oJlXCdzaCotsfG6O_ze6MZlfy7J/pub?output=csv'
+];
 
 function onCSVLoaded(csvText, source) {
     var strip = document.getElementById('loading-strip');
@@ -808,17 +1483,14 @@ function onCSVLoaded(csvText, source) {
     var keys = Object.keys(ALL_DATA);
     LEMBAGA_LIST = keys.sort();
     csvLoaded = true;
+
+    // Re-enable tombol SEBELUM showLembaga agar tidak tertahan jika showLembaga error
+    var btn = document.getElementById('btn-sync');
+    if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
+
     var q = document.getElementById('search-input').value.trim();
     if (q.length >= 2) doSearch(q);
-
-    if (currentName) {
-        showLembaga(currentName);
-    }
-    var btn = document.getElementById('btn-sync');
-    if (btn) {
-        btn.classList.remove('spinning');
-        btn.disabled = false;
-    }
+    if (currentName) { showLembaga(currentName); }
 }
 
 function fetchViaProxy(url) {
@@ -833,45 +1505,65 @@ function fetchViaProxy(url) {
         });
 }
 
-function fetchDirect(url) {
-    url = url || DIRECT_CSV_URL;
-    return fetch(url)
-        .then(function(res) {
-            if (!res.ok) throw new Error('Direct HTTP ' + res.status);
-            return res.text();
-        })
-        .then(function(csvText) {
-            onCSVLoaded(csvText, 'direct');
+function fetchDirect(urls) {
+    urls = urls || DIRECT_CSV_URLS;
+    var promises = urls.map(function(url) {
+        return fetch(url)
+            .then(function(res) {
+                if (!res.ok) throw new Error('Direct HTTP ' + res.status);
+                return res.text();
+            });
+    });
+    return Promise.all(promises)
+        .then(function(results) {
+            var combinedCSV = results.join('\n');
+            onCSVLoaded(combinedCSV, 'direct');
+            var btn = document.getElementById('btn-sync');
+            if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
         });
 }
 
-function fetchViaPapaParse(url, label) {
+function fetchViaPapaParse(urls, label) {
+    if (typeof urls === 'string') urls = [urls];
+    urls = urls || DIRECT_CSV_URLS;
     return new Promise(function(resolve, reject) {
-        Papa.parse(url, {
-            download: true,
-            skipEmptyLines: false,
-            complete: function(results) {
-                var strip = document.getElementById('loading-strip');
-                strip.style.display = 'none';
-                ALL_DATA = parseCSVDirect(results.data);
-                var keys = Object.keys(ALL_DATA);
-                LEMBAGA_LIST = keys.sort();
-                csvLoaded = true;
-                var q = document.getElementById('search-input').value.trim();
-                if (q.length >= 2) doSearch(q);
-
-                if (currentName) {
-                    showLembaga(currentName);
-                }
-                var btn = document.getElementById('btn-sync');
-                if (btn) {
-                    btn.classList.remove('spinning');
-                    btn.disabled = false;
-                }
-                resolve();
-            },
-            error: function(err) { reject(err); }
+        var promises = urls.map(function(url) {
+            return new Promise(function(res, rej) {
+                Papa.parse(url, {
+                    download: true,
+                    skipEmptyLines: false,
+                    complete: function(results) {
+                        res(results.data);
+                    },
+                    error: function(err) { rej(err); }
+                });
+            });
         });
+
+        Promise.all(promises).then(function(resultsArray) {
+            var combinedData = [];
+            resultsArray.forEach(function(data) {
+                combinedData = combinedData.concat(data);
+            });
+            var strip = document.getElementById('loading-strip');
+            strip.style.display = 'none';
+            ALL_DATA = parseCSVDirect(combinedData);
+            var keys = Object.keys(ALL_DATA);
+            LEMBAGA_LIST = keys.sort();
+            csvLoaded = true;
+            var q = document.getElementById('search-input').value.trim();
+            if (q.length >= 2) doSearch(q);
+
+            if (currentName) {
+                showLembaga(currentName);
+            }
+            var btn = document.getElementById('btn-sync');
+            if (btn) {
+                btn.classList.remove('spinning');
+                btn.disabled = false;
+            }
+            resolve();
+        }).catch(reject);
     });
 }
 
@@ -898,24 +1590,24 @@ function fetchCSV(force) {
     var tDirect = force ? '&t=' + Date.now() : '';
 
     var proxyUrl = 'csv_proxy.php' + t;
-    var directUrl = DIRECT_CSV_URL + tDirect;
+    var directUrls = DIRECT_CSV_URLS.map(function(url) { return url + tDirect; });
 
     // Coba 1: PHP proxy (hindari CORS/redirect Google Sheets)
-    fetchViaProxy(proxyUrl)
+    return fetchViaProxy(proxyUrl)
         .catch(function(err1) {
             console.warn('[CSV] Proxy gagal:', err1.message, '— coba direct fetch...');
             // Coba 2: fetch langsung ke Google Sheets
-            return fetchDirect(directUrl);
+            return fetchDirect(directUrls);
         })
         .catch(function(err2) {
             console.warn('[CSV] Direct gagal:', err2.message, '— coba PapaParse proxy...');
             // Coba 3: PapaParse via proxy
-            return fetchViaPapaParse(proxyUrl, 'proxy');
+            return fetchViaPapaParse([proxyUrl], 'proxy');
         })
         .catch(function(err3) {
             console.warn('[CSV] PapaParse proxy gagal:', err3.message, '— coba PapaParse direct...');
             // Coba 4: PapaParse langsung
-            return fetchViaPapaParse(directUrl, 'direct');
+            return fetchViaPapaParse(directUrls, 'direct');
         })
         .catch(function(err4) {
             console.error('[CSV] Semua metode gagal:', err4);
@@ -923,15 +1615,49 @@ function fetchCSV(force) {
         });
 }
 
+function loadDynamicGids(forceFresh) {
+    var url = 'csv_proxy.php?action=gids' + (forceFresh ? '&t=' + Date.now() : '');
+    return fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    if (/^\d+$/.test(key)) {
+                        CSV2_ROW_TO_GID[key] = data[key];
+                    } else {
+                        CSV2_NAME_TO_GID[key.toUpperCase()] = data[key];
+                    }
+                }
+            }
+            console.log('[GID] Loaded dynamic mapping (Row:', Object.keys(CSV2_ROW_TO_GID).length, 'Name:', Object.keys(CSV2_NAME_TO_GID).length, ')');
+            if (currentName && ALL_DATA[currentName]) {
+                showLembaga(currentName);
+            }
+        })
+        .catch(function(err) {
+            console.warn('[GID] Gagal memuat dynamic GID mapping:', err.message);
+        });
+}
+
 function syncData() {
     var btn = document.getElementById('btn-sync');
     if (!btn) return;
-    if (btn.classList.contains('spinning')) return;
 
     btn.classList.add('spinning');
     btn.disabled = true;
 
-    fetchCSV(true);
+    // Reset donor cache and force fresh load on sync
+    DONOR_CACHE = {};
+    forceFreshDonor = true;
+
+    // Refresh dynamic GIDs too
+    loadDynamicGids(true);
+
+    // Jaminan tombol selalu kembali aktif, apapun yang terjadi
+    var done = function() {
+        if (btn) { btn.classList.remove('spinning'); btn.disabled = false; }
+    };
+    fetchCSV(true).then(done, done);
 }
 
 // ── Parse dari raw CSV text (metode utama, lebih handal) ────
@@ -947,165 +1673,149 @@ function parseCSVText(csvText) {
 // ── Parse from PapaParse rows directly ──────────────────────
 function parseCSVDirect(rows) {
     var result = {};
-    
-    // 1. Baca Header Utama (Baris ke 1 s/d 10 di file CSV)
-    var headerLembagaRow = null;
-    var headerTotalRow   = null;
-    var headerBulanRow   = null;
-    
-    var checkLines = Math.min(15, rows.length);
-    for (var i = 0; i < checkLines; i++) {
-        var row = rows[i];
-        if (!row || row.length < 2) continue;
-        var label = String(row[1] || '').trim().toUpperCase();
-        if (label === 'NAMA LEMBAGA')  headerLembagaRow = row;
-        else if (label === 'NOMINAL')  headerTotalRow   = row;
-        else if (label === 'BULAN')    headerBulanRow   = row;
-    }
-    
-    // Inisialisasi awal list lembaga dari header global
-    if (headerLembagaRow) {
-        for (var col = 2; col < headerLembagaRow.length; col++) {
-            var name = String(headerLembagaRow[col] || '').trim().toUpperCase();
-            if (name !== '' && name !== 'NAMA LEMBAGA') {
-                var totalVal = headerTotalRow ? cleanNumber(headerTotalRow[col]) : 0;
-                var bulanVal = headerBulanRow ? String(headerBulanRow[col]).trim() : '';
-                result[name] = { total: totalVal, bulan: bulanVal, transaksi: [] };
-            }
-        }
-    }
-    
-    // 2. Baca Blok Transaksi Horizontal
-    // Fungsi helper: cari posisi 'NO' dalam sebuah baris
-    function findNoColIdx(row) {
-        for (var c = 0; c < Math.min(row.length, 20); c++) {
-            if (String(row[c] || '').trim().toUpperCase() === 'NO') return c;
-        }
-        return -1;
-    }
-    
+    var mode = null;
+    var yearColumns = []; 
+
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         if (!row || row.length < 2) continue;
         
         var col0 = String(row[0] || '').trim().toUpperCase();
         var col1 = String(row[1] || '').trim().toUpperCase();
+        var col2 = String(row[2] || '').trim().toUpperCase();
         
-        // Deteksi baris blok lembaga:
-        // Format normal: col0=NAMA_LEMBAGA, col1=NO
-        // Format BANI MUZAKKI: col0=BANI MUZAKKI, col1=REKAPITULASI..., col[N]=NO
-        var isLembagaBlock = false;
-        var noColStart     = 1; // default: NO ada di col[1]
-        
-        if (col0 !== '' && col1 === 'NO') {
-            isLembagaBlock = true;
-            noColStart = 1;
-        } else if (col0 !== '' && col1 !== '' && col1 !== 'NO') {
-            // Cek apakah ada 'NO' di kolom lain dalam baris ini
-            var noIdx = findNoColIdx(row);
-            if (noIdx > 1) {
-                isLembagaBlock = true;
-                noColStart = noIdx;
-            }
-        }
-        
-        if (!isLembagaBlock) continue;
-        
-        var name = col0;
-        if (!name) continue;
-        
-        // Indeks kolom data mulai setelah posisi NO+1 (karena NO=col[noColStart], data mulai col[noColStart+1])
-        var dataStartCol = noColStart + 1;
-        
-        var rowNo      = row;   // baris yang berisi NO
-        var rowTgl     = null;
-        var rowNama    = null;
-        var rowNominal = null;
-        var rowTotalWakafVal = null; // simpan nilai total langsung
-        var totalWakafCalc   = 0;    // simpan akumulasi dari kolom data
-        
-        // Cari baris TANGGAL, NAMA, NOMINAL, TOTAL WAKAF di offset 1..10
-        for (var offset = 1; offset <= 10; offset++) {
-            if (i + offset >= rows.length) break;
-            var nextRow   = rows[i + offset];
-            if (!nextRow)  continue;
-            
-            var subLabel1 = String(nextRow[1] || '').trim().toUpperCase();
-            var subLabel2 = noColStart > 1 ? String(nextRow[noColStart] || '').trim().toUpperCase() : '';
-            
-            if (!rowTgl && (subLabel1 === 'TANGGAL' || subLabel2 === 'TANGGAL' || subLabel1 === 'TGL TRANSFER' || subLabel2 === 'TGL TRANSFER')) {
-                rowTgl = nextRow;
-            } else if (!rowNama && (subLabel1 === 'NAMA' || subLabel2 === 'NAMA')) {
-                rowNama = nextRow;
-            } else if (!rowNominal && (subLabel1 === 'NOMINAL' || subLabel2 === 'NOMINAL')) {
-                rowNominal = nextRow;
-            } else if (!rowTotalWakafVal && (subLabel1.indexOf('TOTAL WAKAF') !== -1 || subLabel2.indexOf('TOTAL WAKAF') !== -1)) {
-                // Nilai total ada di baris BERIKUTNYA, col[1]
-                var totalRow = rows[i + offset + 1];
-                if (totalRow) {
-                    rowTotalWakafVal = cleanNumber(totalRow[1] || '0');
-                }
-            } else if (!rowTotalWakafVal && subLabel1.indexOf('JUMLAH TOTAL') !== -1) {
-                // Format khusus Bani Muzakki: JUMLAH TOTAL di col 1, nilai di col 2
-                rowTotalWakafVal = cleanNumber(nextRow[2] || '0');
-            }
-        }
-        
-        // Proses transaksi jika struktur lengkap
-        if (rowNo && rowTgl && rowNominal) {
-            if (!result[name]) {
-                result[name] = { total: 0, bulan: '', transaksi: [] };
-            }
-            
-            var maxCols = Math.max(
-                rowNo.length,
-                rowTgl.length,
-                rowNama ? rowNama.length : 0,
-                rowNominal.length
-            );
-            
-            for (var colIdx = dataStartCol; colIdx < maxCols; colIdx++) {
-                var trxNo     = String(rowNo[colIdx]      || '').trim();
-                var trxTgl    = String(rowTgl[colIdx]     || '').trim();
-                var trxNama   = rowNama ? String(rowNama[colIdx] || '').trim() : '';
-                var trxNominal = cleanNumber(rowNominal[colIdx] || '0');
-                
-                // Simpan jika ada nominal > 0 (tanggal opsional)
-                if (trxNominal > 0) {
-                    result[name].transaksi.push({
-                        no:      trxNo,
-                        tgl:     trxTgl,
-                        nama:    trxNama,
-                        nominal: trxNominal
-                    });
-                    totalWakafCalc += trxNominal;
+        // ── Deteksi Header CSV 1 ──────────────────────────────
+        // Format baris: ",NO,REKENING (AKUN),VA BSI,VA BANK LAIN,2020,2021,..."
+        if (col2 === 'REKENING (AKUN)' || col1 === 'REKENING (AKUN)') {
+            mode = 'CSV1';
+            yearColumns = [];
+            // Nama ada di col2, VA BSI di col3, VA BANK LAIN di col4 → tahun mulai col5
+            for (var c = 5; c < row.length; c++) {
+                var y = parseInt(row[c]);
+                if (y >= 2000 && y <= 2100) {
+                    yearColumns.push({ year: y, col: c });
                 }
             }
+            continue;
         }
         
-        // Update total
-        if (rowTotalWakafVal && rowTotalWakafVal > 0 && result[name]) {
-            result[name].total = rowTotalWakafVal;
-        } else if (totalWakafCalc > 0 && result[name] && totalWakafCalc > result[name].total) {
-            result[name].total = totalWakafCalc;
+        // ── Deteksi Header CSV 2 ──────────────────────────────
+        // Format baris: "NO,NAMA LEMBAGA,BULAN,NOMINAL"
+        if (col1 === 'NAMA LEMBAGA' && col2 === 'BULAN') {
+            mode = 'CSV2';
+            continue;
         }
         
-        // Skip baris yang sudah diproses (NO + TANGGAL + NAMA + NOMINAL + kosong = 5 baris min)
-        i += 5;
+        // ── Baris data CSV1: ,{no},{NAMA DENGAN WAKAF},{va_bsi},{va_lain},{2020},...
+        if (mode === 'CSV1') {
+            // col0='', col1=nomor urut, col2=nama lembaga
+            var nama = String(row[2] || '').trim().toUpperCase();
+            if (!nama) continue;
+            // Skip baris footer/ringkasan
+            if (nama === 'JUMLAH' || nama.startsWith('NOMINAL') || nama.startsWith('PEROSENTASE')) continue;
+            // Skip jika col2 hanya angka (baris kosong / nomor saja)
+            if (!isNaN(parseFloat(nama)) && isFinite(nama)) continue;
+
+            var vaBsi  = String(row[3] || '').trim();
+            var vaLain = String(row[4] || '').trim();
+            
+            if (!result[nama]) {
+                result[nama] = { total: 0, bulan: '', va_bsi: '', va_lain: '', yearly: [], transaksi: [] };
+            }
+            if (vaBsi)  result[nama].va_bsi  = vaBsi;
+            if (vaLain) result[nama].va_lain = vaLain;
+            
+            var lastTotal = 0;
+            var yearlyData = [];
+            for (var yi = 0; yi < yearColumns.length; yi++) {
+                var val = cleanNumber(row[yearColumns[yi].col]);
+                if (val > 0) {
+                    yearlyData.push({ year: yearColumns[yi].year, nominal: val });
+                    lastTotal = val;
+                }
+            }
+            if (yearlyData.length > 0) {
+                result[nama].yearly = yearlyData;
+                result[nama].total = lastTotal; // Fallback jika CSV2 tidak ada
+            }
+        } 
+        else if (mode === 'CSV2') {
+            // ── Baris data CSV2: {no},{NAMA TANPA WAKAF},{bulan},{nominal}
+            var nama2  = String(row[1] || '').trim().toUpperCase();
+            if (!nama2 || nama2 === 'JUMLAH') continue;
+            
+            var rowNo2   = parseInt(String(row[0] || '').trim()) || 0;
+            var bulan2   = String(row[2] || '').trim();
+            // CSV2 pakai titik sebagai ribuan: "226.461.000" → cleanNumber sudah handle
+            var nominal2 = cleanNumber(row[3]);
+            
+            // Coba cocokkan ke entri CSV1: tambahkan prefix "WAKAF " dulu
+            var targetKey = null;
+            if (result['WAKAF ' + nama2] !== undefined) {
+                targetKey = 'WAKAF ' + nama2;   // ← cocok "WAKAF PPMA" dengan "PPMA"
+            } else if (result[nama2] !== undefined) {
+                targetKey = nama2;               // ← cocok exact jika CSV1 tidak pakai prefix
+            }
+            
+            if (targetKey) {
+                // Perkaya entri CSV1 dengan data terkini dari CSV2
+                if (bulan2)   result[targetKey].bulan = bulan2;
+                if (nominal2 > 0) result[targetKey].total = nominal2;
+                if (rowNo2 > 0 && !result[targetKey]._no) result[targetKey]._no = rowNo2;
+            } else {
+                // Lembaga baru yang hanya ada di CSV2 (belum ada di CSV1)
+                if (!result[nama2]) {
+                    result[nama2] = { total: 0, bulan: '', va_bsi: '', va_lain: '', yearly: [], transaksi: [], _no: rowNo2 };
+                }
+                if (bulan2)   result[nama2].bulan = bulan2;
+                if (nominal2 > 0) result[nama2].total = nominal2;
+                if (rowNo2 > 0 && !result[nama2]._no) result[nama2]._no = rowNo2;
+            }
+        }
     }
     
-    // Fallback: hitung ulang total nominal jika total masih 0 tapi ada transaksi
+    // ── Generate 'transaksi' untuk tabel & chart ─────────────
     Object.keys(result).forEach(function(k) {
-        if (result[k].total === 0 && result[k].transaksi.length > 0) {
-            result[k].total = result[k].transaksi.reduce(function(s, t) { return s + t.nominal; }, 0);
+        var inst = result[k];
+        inst.transaksi = [];
+        
+        if (inst.yearly && inst.yearly.length > 0) {
+            // Baris perkembangan per tahun dari CSV1
+            inst.yearly.forEach(function(yr, idx) {
+                var prev   = idx > 0 ? inst.yearly[idx - 1].nominal : 0;
+                var growth = yr.nominal - prev;
+                inst.transaksi.push({
+                    no:         idx + 1,
+                    tgl:        '31/12/' + yr.year,
+                    nama:       'Perkembangan ' + yr.year,
+                    nominal:    growth > 0 ? growth : 0,  // delta untuk chart kumulatif
+                    cumulative: yr.nominal                  // nilai penuh untuk tabel
+                });
+            });
+            // Tambahkan baris terkini dari CSV2 jika total lebih besar dari data tahunan
+            var lastYearly = inst.yearly[inst.yearly.length - 1];
+            if (inst.total > lastYearly.nominal && inst.bulan) {
+                inst.transaksi.push({
+                    no:         inst.transaksi.length + 1,
+                    tgl:        '30/06/2026',
+                    nama:       inst.bulan,
+                    nominal:    inst.total - lastYearly.nominal,
+                    cumulative: inst.total
+                });
+            }
+        } else if (inst.total > 0) {
+            // Lembaga baru — hanya punya data CSV2, tanpa riwayat tahunan
+            inst.transaksi = [{
+                no:         1,
+                tgl:        '30/06/2026',
+                nama:       inst.bulan || 'Saldo Terkini',
+                nominal:    inst.total,
+                cumulative: inst.total
+            }];
         }
     });
-    
-    console.log('[parseCSVDirect] Result summary:');
-    Object.keys(result).forEach(function(k) {
-        console.log(' ', k, '-> trx:', result[k].transaksi.length, 'total:', result[k].total);
-    });
-    
+
+    console.log('[parseCSVDirect] Loaded:', Object.keys(result).length, 'lembaga.');
     return result;
 }
 
@@ -1122,9 +1832,9 @@ function getSortIcon(col) {
 function renderTableHeader() {
     return '<tr>' +
         '<th onclick="sortTable(0)" style="cursor:pointer; white-space:nowrap; text-align:center; width:50px;">No ' + getSortIcon(0) + '</th>' +
-        '<th onclick="sortTable(1)" style="cursor:pointer; white-space:nowrap; width:110px;">Tanggal ' + getSortIcon(1) + '</th>' +
-        '<th onclick="sortTable(2)" style="cursor:pointer; white-space:nowrap; width:auto;">Nama Wakif ' + getSortIcon(2) + '</th>' +
-        '<th onclick="sortTable(3)" style="cursor:pointer; white-space:nowrap; text-align:right; width:130px;">Nominal ' + getSortIcon(3) + '</th>' +
+        '<th onclick="sortTable(1)" style="cursor:pointer; white-space:nowrap; width:130px;">Tahun ' + getSortIcon(1) + '</th>' +
+        '<th onclick="sortTable(2)" style="cursor:pointer; white-space:nowrap; width:auto;">Keterangan ' + getSortIcon(2) + '</th>' +
+        '<th onclick="sortTable(3)" style="cursor:pointer; white-space:nowrap; text-align:right; width:160px;">Akumulasi Nominal ' + getSortIcon(3) + '</th>' +
     '</tr>';
 }
 
@@ -1142,7 +1852,7 @@ function sortTable(col) {
         if (col === 0) { // No
             valA = parseInt(a.no) || 0;
             valB = parseInt(b.no) || 0;
-        } else if (col === 1) { // Tanggal
+        } else if (col === 1) { // Tanggal/Tahun
             function parseTgl(t) {
                 if(!t) return 0;
                 var parts = t.split(/[-\/]/);
@@ -1151,12 +1861,12 @@ function sortTable(col) {
             }
             valA = parseTgl(a.tgl);
             valB = parseTgl(b.tgl);
-        } else if (col === 2) { // Nama
+        } else if (col === 2) { // Nama/Keterangan
             valA = (a.nama || '').toUpperCase();
             valB = (b.nama || '').toUpperCase();
-        } else if (col === 3) { // Nominal
-            valA = parseFloat(a.nominal) || 0;
-            valB = parseFloat(b.nominal) || 0;
+        } else if (col === 3) { // Nominal (Akumulasi)
+            valA = parseFloat(a.cumulative || a.nominal) || 0;
+            valB = parseFloat(b.cumulative || b.nominal) || 0;
         }
         
         if (valA < valB) return currentSort.dir === 'asc' ? -1 : 1;
@@ -1198,9 +1908,17 @@ function doSearch(q) {
         return;
     }
 
-    // Tampilkan lembaga paling relevan (exact atau pertama)
-    var best = matches.find(function(n) { return n === qUp; }) || matches[0];
-    showLembaga(best);
+    // Hanya tampilkan detail lembaga jika cocok persis (exact match) ATAU jika hanya ada 1 hasil pencarian yang unik
+    var exactMatch = matches.find(function(n) { return n === qUp; });
+    if (exactMatch) {
+        showLembaga(exactMatch);
+    } else if (matches.length === 1) {
+        showLembaga(matches[0]);
+    } else {
+        // Banyak hasil cocok (misal kata kunci sama seperti "WAKAF"), sembunyikan detail demi privasi
+        hideResult();
+        showEmptyState();
+    }
 }
 
 function showEmptyState() {
@@ -1210,6 +1928,11 @@ function showEmptyState() {
 function hideResult() {
     document.getElementById('result-area').style.display = 'none';
     document.getElementById('result-area').innerHTML = '';
+    var donorArea = document.getElementById('donor-area');
+    if (donorArea) {
+        donorArea.innerHTML = '';
+        donorArea._donors = null;
+    }
     if (currentChart) { currentChart.destroy(); currentChart = null; }
 }
 
@@ -1217,6 +1940,13 @@ function hideResult() {
 function showAutocomplete(matches, q) {
     var list = document.getElementById('autocomplete-list');
     if (!csvLoaded || matches.length === 0) { hideAutocomplete(); return; }
+
+    // Jika terdapat lebih dari 1 hasil yang cocok dengan kata kunci tersebut,
+    // jangan tampilkan daftar dropdown saran demi menjaga privasi nama-nama lembaga lain.
+    if (matches.length > 1) {
+        hideAutocomplete();
+        return;
+    }
 
     var qUp = q.toUpperCase();
     var html = '';
@@ -1282,11 +2012,76 @@ function showLembaga(name) {
     // Stats
     html += '<div class="stats-bar">' +
         '<div class="stat-item"><div class="stat-label">Total Akumulasi</div><div class="stat-value green" style="font-size:1.55rem; margin-top:2px;">' + formatRp(total) + '</div></div>' +
-    '</div>' +
-    '<div class="stats-bar">' +
-        '<div class="stat-item"><div class="stat-label">Jumlah Transaksi</div><div class="stat-value">' + jmlTrx.toLocaleString('id') + '</div></div>' +
-        '<div class="stat-item"><div class="stat-label">Rata-rata / Trx</div><div class="stat-value gold">' + (jmlTrx > 0 ? formatRp(total / jmlTrx) : '-') + '</div></div>' +
     '</div>';
+
+    // VA Info
+    if (data.va_bsi || data.va_lain) {
+        html += '<div class="stats-bar va-bar" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 16px; background: rgba(255,255,255,0.65); border: 1px dashed var(--border); border-radius: 12px; margin-top: 10px; width: 100%; box-sizing: border-box;">';
+        if (data.va_bsi) {
+            html += '<div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; width: 100%;">' +
+                '<span><strong style="color:var(--navy3)">VA BSI:</strong> <code style="background:#eef2f7; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:0.9rem; margin-left:5px;">' + data.va_bsi + '</code></span>' +
+                '<button onclick="copyToClipboard(\'' + data.va_bsi + '\')" style="background:none; border:none; color:var(--teal); cursor:pointer; font-size:1.1rem; display:inline-flex; align-items:center; padding: 4px;" title="Salin VA BSI"><i class="bx bx-copy"></i></button>' +
+            '</div>';
+        }
+        if (data.va_lain) {
+            html += '<div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; width: 100%;">' +
+                '<span><strong style="color:var(--navy3)">VA Bank Lain:</strong> <code style="background:#eef2f7; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:0.9rem; margin-left:5px;">' + data.va_lain + '</code></span>' +
+                '<button onclick="copyToClipboard(\'' + data.va_lain + '\')" style="background:none; border:none; color:var(--teal); cursor:pointer; font-size:1.1rem; display:inline-flex; align-items:center; padding: 4px;" title="Salin VA Bank Lain"><i class="bx bx-copy"></i></button>' +
+            '</div>';
+        }
+        html += '</div>';
+    }
+
+    // ── Render Certificate Card ─────────────────────────────────
+    var certInfo = CERT_DATA[name];
+    if (certInfo && certInfo.certs && Object.keys(certInfo.certs).length > 0) {
+        var certYears = Object.keys(certInfo.certs).map(Number);
+        var latestYear = Math.max.apply(null, certYears);
+        var certUrl = certInfo.certs[latestYear];
+        var fileIdMatch = certUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || certUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        var fileId = fileIdMatch ? fileIdMatch[1] : null;
+
+        if (fileId) {
+            var thumbUrl = 'https://drive.google.com/thumbnail?sz=w600&id=' + fileId;
+            var displayName = capitalize(name);
+            var safeFileId = fileId.replace(/'/g, "\\'");
+            var safeTitle = ('Sertifikat ' + displayName + ' (Terbaru)').replace(/'/g, "\\'");
+
+            html += '<div class="cert-card">' +
+                '<div class="cert-card-inner">' +
+                    '<div class="cert-watermark"><i class="bx bx-award"></i></div>' +
+                    '<div class="cert-tag"><i class="bx bxs-award"></i> Sertifikat Resmi</div>' +
+                    '<div class="cert-preview-box" onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')">' +
+                        '<img src="' + thumbUrl + '" alt="Sertifikat Wakaf ' + displayName + '" onerror="this.parentElement.classList.add(\'no-image\')">' +
+                        '<div class="cert-fallback-template">' +
+                            '<i class="bx bx-award" style="font-size:2.5rem;"></i>' +
+                            '<span style="font-family:\'Playfair Display\',serif;font-weight:700;font-size:0.9rem;">SERTIFIKAT WAKAF UANG</span>' +
+                            '<span style="font-size:0.75rem;color:var(--navy3);max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + displayName + '</span>' +
+                            '<span style="font-size:0.7rem;color:var(--muted);">Terbaru (' + latestYear + ')</span>' +
+                        '</div>' +
+                        '<div class="cert-overlay"><div class="cert-overlay-inner"><i class="bx bx-zoom-in"></i></div></div>' +
+                    '</div>' +
+                    '<div class="cert-title">Sertifikat Wakaf Terakhir</div>' +
+                    (function() {
+                        // Hitung perolehan bulan terkini (delta dari tahunan terakhir ke total saat ini)
+                        var latestMonthNominal = total;
+                        if (data.yearly && data.yearly.length > 0) {
+                            var lastYearNominal = data.yearly[data.yearly.length - 1].nominal;
+                            if (total > lastYearNominal) {
+                                latestMonthNominal = total - lastYearNominal;
+                            }
+                        }
+                        var bulanLabel = data.bulan ? ' (' + data.bulan + ')' : '';
+                        return '<div class="cert-desc">Sertifikat atas nama <em>' + displayName + '</em> (Terbaru). Perolehan bulan terkini' + bulanLabel + ': <strong>' + formatRpFull(latestMonthNominal) + '</strong>. Akumulasi terakhir: <strong>' + formatRpFull(total) + '</strong>.</div>';
+                    })() +
+                    '<div class="cert-actions">' +
+                        '<button onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')" class="btn-cert-primary"><i class="bx bx-fullscreen"></i> Perbesar Pratinjau</button>' +
+                        '<a href="' + certUrl + '" target="_blank" class="btn-cert-secondary"><i class="bx bx-link-external"></i> Buka di Drive</a>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }
+    }
 
     // Chart (hanya jika ada data)
     if (chartData.labels.length > 1) {
@@ -1296,16 +2091,17 @@ function showLembaga(name) {
     }
 
     // Table header
-    html += '<div class="table-section">' +
-        '<div class="section-title"><i class="bx bx-list-ul"></i>Riwayat Transaksi Penerimaan</div>';
+    html += '<div class="table-section">';
 
     // Reset sort state when showing new lembaga
     currentSort = { col: -1, dir: 'asc' };
 
     // Build table
-    html += '<div class="table-responsive"><table class="trx-table"><thead id="trx-thead">' + renderTableHeader() + '</thead><tbody id="trx-tbody"></tbody>' +
+    html += '<div class="table-responsive">' +
+        '<div class="section-title"><i class="bx bx-list-ul"></i>Perkembangan Penerimaan Tahunan</div>' +
+        '<table class="trx-table"><thead id="trx-thead">' + renderTableHeader() + '</thead><tbody id="trx-tbody"></tbody>' +
     '<tfoot><tr class="tfoot-row">' +
-        '<td colspan="3" style="text-align:right;padding-right:14px;">Total Penerimaan</td>' +
+        '<td colspan="3" style="text-align:right;padding-right:14px;">Akumulasi Terakhir</td>' +
         '<td>' + formatRpFull(total) + '</td>' +
     '</tr></tfoot></table></div>';
 
@@ -1322,6 +2118,19 @@ function showLembaga(name) {
 
     // Render tabel
     renderTable();
+
+    // ── Muat detail donatur jika sheet tersedia ──────────────
+    var donorArea = document.getElementById('donor-area');
+    if (donorArea) donorArea.innerHTML = '';
+    
+    var sheetGid = getGidForLembaga(name, data._no);
+    if (sheetGid) {
+        if (donorArea) {
+            donorArea.innerHTML = '<div class="donor-card"><div class="donor-loading"><i class="bx bx-loader-alt bx-spin"></i>Memuat detail donatur...</div></div>';
+        }
+        loadDonorDetail(sheetGid, name, forceFreshDonor);
+        forceFreshDonor = false; // Reset after usage
+    }
 }
 
 // ── Build chart data (kumulatif per bulan) ────────────────────
@@ -1442,11 +2251,12 @@ function renderTable() {
     } else {
         var html = '';
         slice.forEach(function(t, idx) {
+            var displayYear = (t.tgl || '').split(/[-\/]/).pop() || t.tgl || '-';
             html += '<tr>' +
                 '<td>' + (start + idx + 1) + '</td>' +
-                '<td><span class="tgl-badge">' + fmtTgl(t.tgl) + '</span></td>' +
+                '<td><span class="tgl-badge">' + displayYear + '</span></td>' +
                 '<td>' + (t.nama || '-') + '</td>' +
-                '<td>' + formatRpFull(t.nominal) + '</td>' +
+                '<td>' + formatRpFull(t.cumulative || t.nominal) + '</td>' +
             '</tr>';
         });
         tbody.innerHTML = html;
@@ -1528,7 +2338,359 @@ function getIcon(name) {
 }
 
 function capitalize(str) {
-    return str.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+    return str.toUpperCase();
+}
+
+// ── Parse sheet detail donatur ───────────────────────────────
+function parseDonorSheet(csvText) {
+    var lines = csvText.split('\n');
+    var donors = [];
+    var headerFound = false;
+    var idxNo = -1, idxTgl = -1, idxNama = -1, idxNominal = -1;
+
+    for (var i = 0; i < lines.length; i++) {
+        var cols = splitCSVLine(lines[i]);
+        if (!cols || cols.length < 2) continue;
+
+        if (!headerFound) {
+            // Coba deteksi kolom header secara dinamis
+            var hasNama = false, hasNominal = false;
+            for (var j = 0; j < cols.length; j++) {
+                var val = String(cols[j] || '').trim().toUpperCase();
+                if (val === 'NO')                                 idxNo      = j;
+                if (val.includes('TGL') || val.includes('TANGGAL')) idxTgl   = j;
+                if (val === 'NAMA' || val === 'NAMA DONATUR')     { idxNama    = j; hasNama    = true; }
+                if (val === 'NOMINAL')                            { idxNominal = j; hasNominal = true; }
+            }
+            if (hasNama || hasNominal) {
+                // Tetapkan fallback jika kolom tgl/no tidak terdeteksi
+                if (idxNo      < 0) idxNo      = 0;
+                if (idxTgl     < 0) idxTgl     = (idxNama > 1) ? 1 : idxNominal + 1;
+                if (idxNama    < 0) idxNama    = 2;
+                if (idxNominal < 0) idxNominal = 3;
+                headerFound = true;
+                continue;
+            }
+            continue;
+        }
+
+        var c0 = String(idxNo      >= 0 ? (cols[idxNo]      || '') : '').trim();
+        var c1 = String(idxTgl     >= 0 ? (cols[idxTgl]     || '') : '').trim();
+        var c2 = String(idxNama    >= 0 ? (cols[idxNama]    || '') : '').trim();
+        var c3 = String(idxNominal >= 0 ? (cols[idxNominal] || '') : '').trim();
+
+        // Skip baris ringkasan / footer
+        var c1u = c1.toUpperCase(), c2u = c2.toUpperCase();
+        if (c1u.includes('JUMLAH') || c2u.includes('JUMLAH') || c1u.includes('TOTAL')) continue;
+        if (String(cols[0]||'').toUpperCase() === 'REKAP') continue;
+        if (!c1 && !c2 && !c3) continue;
+
+        var nominal = cleanNumber(c3);
+        // Skip baris tanpa nama DAN tanpa nominal yang valid
+        if (nominal === 0 && !c2) continue;
+
+        donors.push({
+            no:      c0 || (donors.length + 1),
+            tgl:     c1 || '-',
+            nama:    c2 || '-',
+            nominal: nominal
+        });
+    }
+    return donors;
+}
+
+// ── Fetch & render detail donatur ─────────────────────────────
+function loadDonorDetail(gid, lembagaName, forceFresh) {
+    var cacheKey = gid;
+    if (!forceFresh && DONOR_CACHE[cacheKey]) {
+        renderDonorSection(DONOR_CACHE[cacheKey], lembagaName);
+        return;
+    }
+    var url = 'csv_proxy.php?sheet=' + gid + (forceFresh ? '&t=' + Date.now() : '');
+    fetch(url)
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
+        .then(function(text) {
+            if (text.trimStart().startsWith('<')) throw new Error('Bukan CSV');
+            var donors = parseDonorSheet(text);
+            DONOR_CACHE[cacheKey] = donors;
+            // Pastikan masih menampilkan lembaga yang sama
+            if (currentName === lembagaName) renderDonorSection(donors, lembagaName);
+        })
+        .catch(function(err) {
+            console.warn('[Donor] Gagal fetch sheet', gid, err.message);
+            var donorArea = document.getElementById('donor-area');
+            if (donorArea && currentName === lembagaName) donorArea.innerHTML = '';
+        });
+}
+
+function reloadCurrentDonorDetail(forceFresh) {
+    if (!currentName || !ALL_DATA[currentName]) return;
+    var data = ALL_DATA[currentName];
+    var sheetGid = getGidForLembaga(currentName, data._no);
+    if (sheetGid) {
+        var donorArea = document.getElementById('donor-area');
+        if (donorArea) {
+            donorArea.innerHTML = '<div class="donor-card"><div class="donor-loading"><i class="bx bx-loader-alt bx-spin"></i>Memuat ulang detail donatur...</div></div>';
+        }
+        loadDonorDetail(sheetGid, currentName, forceFresh);
+    }
+}
+
+function renderDonorSection(donors, lembagaName) {
+    var donorArea = document.getElementById('donor-area');
+    if (!donorArea) return;
+
+    if (!donors || donors.length === 0) {
+        donorArea.innerHTML = '<div class="donor-card"><div class="section-title" style="padding: 0; margin-bottom: 16px;"><i class="bx bx-user-circle"></i>Detail Donatur</div><div class="donor-empty"><i class="bx bx-user-x"></i>Belum ada data detail donatur tersedia.</div></div>';
+        return;
+    }
+
+    currentDonorPage = 1;
+    donorSort = { col: -1, dir: 'asc' };
+    renderDonorTable(donors);
+}
+
+// ── Parse tanggal donor ke timestamp ────────────────────────
+function parseDateTgl(str) {
+    if (!str) return 0;
+    str = str.trim();
+
+    // Bulan Indonesia → angka
+    var bulanMap = {
+        'januari':1,'februari':2,'maret':3,'april':4,'mei':5,'juni':6,
+        'juli':7,'agustus':8,'september':9,'oktober':10,'november':11,'desember':12,
+        'jan':1,'feb':2,'mar':3,'apr':4,'jun':6,'jul':7,'agu':8,'ags':8,
+        'sep':9,'okt':10,'nov':11,'des':12,
+        // English abbr
+        'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,
+        'aug':8,'sep':9,'oct':10,'nov':11,'dec':12
+    };
+
+    // Format: DD-NamaBulan-YY atau DD-NamaBulan-YYYY
+    // misal: 16-Oktober-21, 17-September-22, 16-Nov-19
+    var m1 = str.match(/^(\d{1,2})[\/\-\s]([a-zA-Z]+)[\/\-\s](\d{2,4})$/);
+    if (m1) {
+        var d = parseInt(m1[1]);
+        var mStr = m1[2].toLowerCase();
+        var y = parseInt(m1[3]);
+        if (y < 100) y += (y <= 30 ? 2000 : 1900); // 2-digit year
+        var mo = bulanMap[mStr] || bulanMap[mStr.substring(0,3)] || 0;
+        if (mo > 0) return new Date(y, mo - 1, d).getTime();
+    }
+
+    // Format numerik: DD-MM-YYYY atau DD/MM/YYYY
+    var m2 = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (m2) {
+        var d2 = parseInt(m2[1]);
+        var mo2 = parseInt(m2[2]);
+        var y2 = parseInt(m2[3]);
+        if (y2 < 100) y2 += (y2 <= 30 ? 2000 : 1900);
+        // Heuristik: jika bulan > 12, tukar hari & bulan (MM-DD format)
+        if (mo2 > 12 && d2 <= 12) { var tmp = d2; d2 = mo2; mo2 = tmp; }
+        return new Date(y2, mo2 - 1, d2).getTime();
+    }
+
+    // Fallback: coba Date.parse
+    var ts = Date.parse(str);
+    return isNaN(ts) ? 0 : ts;
+}
+
+function getDonorSorted(donors) {
+    if (donorSort.col < 0) return donors.slice();
+    return donors.slice().sort(function(a, b) {
+        var va, vb;
+        if (donorSort.col === 1) {
+            // Urutkan berdasarkan nilai tanggal sebenarnya
+            va = parseDateTgl(a.tgl);
+            vb = parseDateTgl(b.tgl);
+            return donorSort.dir === 'asc' ? va - vb : vb - va;
+        } else if (donorSort.col === 2) { va = a.nama || ''; vb = b.nama || ''; }
+        else if (donorSort.col === 3) { va = a.nominal || 0; vb = b.nominal || 0; }
+        else return 0;
+        if (typeof va === 'number') return donorSort.dir === 'asc' ? va - vb : vb - va;
+        return donorSort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+}
+
+function donorSortBy(col) {
+    if (donorSort.col === col) {
+        donorSort.dir = donorSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        donorSort.col = col;
+        donorSort.dir = 'asc';
+    }
+    currentDonorPage = 1;
+    var donorArea = document.getElementById('donor-area');
+    if (donorArea && donorArea._donors) renderDonorTable(donorArea._donors);
+}
+
+function donorChangeRows(val) {
+    DONOR_PER_PAGE = (val === 'all') ? 999999 : (parseInt(val) || 25);
+    currentDonorPage = 1;
+    var donorArea = document.getElementById('donor-area');
+    if (donorArea && donorArea._donors) renderDonorTable(donorArea._donors);
+}
+
+function renderDonorTable(donors) {
+    var donorArea = document.getElementById('donor-area');
+    if (!donorArea) return;
+
+    var sorted = getDonorSorted(donors);
+    var total   = sorted.length;
+    var isAll   = DONOR_PER_PAGE >= 999999;
+    var totPages = isAll ? 1 : Math.max(1, Math.ceil(total / DONOR_PER_PAGE));
+    if (currentDonorPage > totPages) currentDonorPage = totPages;
+
+    var start = (currentDonorPage - 1) * (isAll ? total : DONOR_PER_PAGE);
+    var end   = isAll ? total : Math.min(start + DONOR_PER_PAGE, total);
+    var slice = sorted.slice(start, end);
+
+    // Hitung total nominal (dari SEMUA data, bukan hanya halaman ini)
+    var grandTotal = donors.reduce(function(s, d) { return s + (d.nominal || 0); }, 0);
+
+    // ── Sort indicator helper ──
+    function sortIcon(col) {
+        if (donorSort.col !== col) return '<i class="bx bx-sort" style="opacity:.35;font-size:.8rem;margin-left:4px;"></i>';
+        return donorSort.dir === 'asc'
+            ? '<i class="bx bx-sort-up" style="color:var(--gold);font-size:.8rem;margin-left:4px;"></i>'
+            : '<i class="bx bx-sort-down" style="color:var(--gold);font-size:.8rem;margin-left:4px;"></i>';
+    }
+
+    // Baris tabel
+    var rows = '';
+    slice.forEach(function(d, idx) {
+        var isNegTrx = d.nominal < 0;
+        rows += '<tr' + (isNegTrx ? ' style="background:rgba(220,38,38,0.04);"' : '') + '>' +
+            '<td style="text-align:center;color:var(--muted);">' + (start + idx + 1) + '</td>' +
+            '<td><span class="tgl-badge">' + (d.tgl || '-') + '</span></td>' +
+            '<td>' + capitalize(d.nama || '-') + (isNegTrx ? ' <span style="font-size:0.7rem;color:#dc2626;font-weight:600;">(Pengeluaran)</span>' : '') + '</td>' +
+            '<td style="' + (isNegTrx ? 'color:#dc2626;font-weight:600;' : '') + '">' + (d.nominal !== 0 ? formatRpFull(d.nominal) : '-') + '</td>' +
+        '</tr>';
+    });
+
+    // ── Dropdown tampilkan ──
+    var dpVal = isAll ? 'all' : String(DONOR_PER_PAGE);
+    var selectHtml = '<div class="row-select-wrap">' +
+        '<label>Tampilkan:</label>' +
+        '<select onchange="donorChangeRows(this.value)">' +
+            '<option value="25"'  + (dpVal==='25'  ?' selected':'') + '>25 baris</option>' +
+            '<option value="50"'  + (dpVal==='50'  ?' selected':'') + '>50 baris</option>' +
+            '<option value="100"' + (dpVal==='100' ?' selected':'') + '>100 baris</option>' +
+            '<option value="all"' + (dpVal==='all' ?' selected':'') + '>Semua</option>' +
+        '</select>' +
+    '</div>';
+
+    // ── Pagination ──
+    var pgInfo = '<span class="pg-info">Menampilkan ' + (total===0?0:start+1) + '\u2013' + end + ' dari ' + total + ' donatur</span>';
+    var pgBtns = '';
+    if (!isAll && totPages > 1) {
+        pgBtns += '<div class="pg-btns">';
+        pgBtns += '<button class="pg-btn" onclick="donorChangePage(' + (currentDonorPage-1) + ')" ' + (currentDonorPage<=1?'disabled':'') + '><i class="bx bx-chevron-left"></i></button>';
+        var sp = Math.max(1, currentDonorPage-2), ep = Math.min(totPages, currentDonorPage+2);
+        if (sp > 1) pgBtns += '<button class="pg-btn" onclick="donorChangePage(1)">1</button>';
+        if (sp > 2) pgBtns += '<span style="color:#aab;padding:0 4px;">\u2026</span>';
+        for (var p = sp; p <= ep; p++) {
+            pgBtns += '<button class="pg-btn' + (p===currentDonorPage?' active':'') + '" onclick="donorChangePage(' + p + ')">' + p + '</button>';
+        }
+        if (ep < totPages-1) pgBtns += '<span style="color:#aab;padding:0 4px;">\u2026</span>';
+        if (ep < totPages)   pgBtns += '<button class="pg-btn" onclick="donorChangePage(' + totPages + ')">' + totPages + '</button>';
+        pgBtns += '<button class="pg-btn" onclick="donorChangePage(' + (currentDonorPage+1) + ')" ' + (currentDonorPage>=totPages?'disabled':'') + '><i class="bx bx-chevron-right"></i></button>';
+        pgBtns += '</div>';
+    }
+
+    // Hitung rata-rata transaksi
+    var avgTrx = total > 0 ? grandTotal / total : 0;
+
+    donorArea.innerHTML =
+        '<div class="donor-card">' +
+            // ── Stats bar paling atas ──
+            '<div class="section-title" style="padding: 0 0 14px 0; border-bottom: 1px solid var(--border); margin-bottom: 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">' +
+                '<span><i class="bx bx-user-circle"></i>Detail Donatur</span>' +
+                '<button onclick="reloadCurrentDonorDetail(true)" style="background:var(--light); border:1px solid var(--border); color:var(--navy); font-family:\'Poppins\',sans-serif; font-size:.78rem; font-weight:500; border-radius:20px; padding:4px 12px; display:inline-flex; align-items:center; gap:4px; cursor:pointer; transition:all .2s ease;" title="Sinkronkan ulang detail donatur sheet ini">' +
+                    '<i class="bx bx-refresh"></i> Refresh Donatur' +
+                '</button>' +
+            '</div>' +
+            '<div class="donor-stats-bar">' +
+                '<div class="donor-stat-item">' +
+                    '<div class="donor-stat-label">Jumlah Transaksi</div>' +
+                    '<div class="donor-stat-value teal">' + total.toLocaleString('id-ID') + ' <span style="font-size:.72rem;font-weight:500;color:var(--muted);">transaksi</span></div>' +
+                '</div>' +
+                '<div class="donor-stat-item">' +
+                    '<div class="donor-stat-label">Rata-rata Transaksi</div>' +
+                    '<div class="donor-stat-value gold">' + formatRp(avgTrx) + '</div>' +
+                '</div>' +
+            '</div>' +
+            // ── Tabel (scroll bersama judul kolom) ──
+            '<div class="table-responsive">' +
+            '<table class="donor-table">' +
+                '<thead><tr>' +
+                    '<th style="text-align:center;width:44px;">No</th>' +
+                    '<th style="width:130px;cursor:pointer;user-select:none;" onclick="donorSortBy(1)">Tanggal ' + sortIcon(1) + '</th>' +
+                    '<th style="cursor:pointer;user-select:none;" onclick="donorSortBy(2)">Nama Donatur ' + sortIcon(2) + '</th>' +
+                    '<th style="width:160px;cursor:pointer;user-select:none;" onclick="donorSortBy(3)">Nominal ' + sortIcon(3) + '</th>' +
+                '</tr></thead>' +
+                '<tbody>' + rows + '</tbody>' +
+                '<tfoot><tr class="tfoot-row">' +
+                    '<td colspan="3" style="text-align:right;padding-right:14px;">Total Donasi</td>' +
+                    '<td>' + formatRpFull(grandTotal) + '</td>' +
+                '</tr></tfoot>' +
+            '</table></div>' +
+            '<div class="donor-pg-wrap">' + pgInfo + (pgBtns || '') + selectHtml + '</div>' +
+        '</div>';
+
+    donorArea._donors = donors;
+}
+
+function donorChangePage(p) {
+    var donorArea = document.getElementById('donor-area');
+    if (!donorArea || !donorArea._donors) return;
+    var isAll = DONOR_PER_PAGE >= 999999;
+    var totPages = isAll ? 1 : Math.max(1, Math.ceil(donorArea._donors.length / DONOR_PER_PAGE));
+    if (p < 1 || p > totPages) return;
+    currentDonorPage = p;
+    renderDonorTable(donorArea._donors);
+    donorArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Certificate Preview Helpers ────────────────────────────────
+function onCertIframeLoad() {
+    var loader = document.getElementById('cert-modal-loader');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(function() { loader.style.display = 'none'; }, 300);
+    }
+}
+
+function openCertModal(fileId, title) {
+    var modal = document.getElementById('cert-modal');
+    var iframe = document.getElementById('cert-iframe');
+    var loader = document.getElementById('cert-modal-loader');
+    var titleEl = document.getElementById('cert-modal-title');
+    
+    if (!modal || !iframe) return;
+    
+    if (titleEl) titleEl.textContent = title || 'Sertifikat Wakaf Uang';
+    if (loader) {
+        loader.style.display = 'flex';
+        loader.style.opacity = '1';
+    }
+    
+    iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCertModal() {
+    var modal = document.getElementById('cert-modal');
+    var iframe = document.getElementById('cert-iframe');
+    if (!modal || !iframe) return;
+    
+    modal.classList.remove('active');
+    iframe.src = '';
+    document.body.style.overflow = '';
 }
 
 // ── UI Events ─────────────────────────────────────────────────
@@ -1561,6 +2723,33 @@ document.addEventListener('DOMContentLoaded', function() {
             hideAutocomplete();
         }
     });
+
+    // Close certificate modal on backdrop click
+    var modal = document.getElementById('cert-modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeCertModal();
+            }
+        });
+    }
+
+    // Load certificate mapping JSON
+    fetch('cert_links.json')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            CERT_DATA = data;
+            console.log('[Cert] Loaded mapping for', Object.keys(CERT_DATA).length, 'institutions.');
+            if (currentName && ALL_DATA[currentName]) {
+                showLembaga(currentName);
+            }
+        })
+        .catch(function(err) {
+            console.warn('[Cert] Gagal memuat cert_links.json:', err.message);
+        });
+
+    // Load GID mapping dynamically from proxy
+    loadDynamicGids();
 
     // Start fetching
     fetchCSV();
