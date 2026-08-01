@@ -614,6 +614,82 @@
         .donor-stat-value.teal { color: var(--teal); }
         .donor-stat-value.gold { color: #c77f00; }
 
+        /* ── Donor Search ─────────────────────────────────── */
+        .donor-search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px 10px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .donor-search-box {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+            max-width: 480px;
+        }
+        .donor-search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 1.05rem;
+            pointer-events: none;
+            transition: color .2s;
+        }
+        .donor-search-input {
+            width: 100%;
+            padding: 9px 38px 9px 36px;
+            border: 1.5px solid var(--border);
+            border-radius: 30px;
+            font-family: 'Poppins', sans-serif;
+            font-size: .84rem;
+            background: var(--light);
+            color: var(--navy);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            box-sizing: border-box;
+        }
+        .donor-search-input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(14,164,161,.12);
+            background: #fff;
+        }
+        .donor-search-input:focus + .donor-search-icon,
+        .donor-search-box:focus-within .donor-search-icon {
+            color: var(--teal);
+        }
+        .donor-search-input::placeholder { color: #b0b8c9; }
+        .donor-search-clear {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 1.1rem;
+            padding: 2px 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            transition: color .2s, background .2s;
+        }
+        .donor-search-clear:hover { color: var(--navy); background: var(--border); }
+        .donor-search-badge {
+            background: linear-gradient(135deg, var(--teal), #0891b2);
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 3px 10px;
+            white-space: nowrap;
+            animation: fadeIn .2s ease;
+        }
+
         /* ══ Certificate Preview Section ════════════════════════ */
         .cert-card {
             background: #fdfcf9;
@@ -1284,11 +1360,13 @@ function getGidForLembaga(name, rowNo) {
     return null;
 }
 
-var DONOR_CACHE      = {}; // cache detail donatur per gid
-var currentDonorPage = 1;
-var DONOR_PER_PAGE   = 25;
-var forceFreshDonor  = false;
-var donorSort        = { col: -1, dir: 'asc' }; // col: 0=No,1=Tgl,2=Nama,3=Nominal
+var DONOR_CACHE       = {}; // cache detail donatur per gid
+var currentDonorPage  = 1;
+var DONOR_PER_PAGE    = 25;
+var forceFreshDonor   = false;
+var donorSort         = { col: -1, dir: 'asc' }; // col: 0=No,1=Tgl,2=Nama,3=Nominal
+var donorSearchQuery  = '';  // kata kunci pencarian aktif
+var _donorSearchTimer = null; // debounce timer
 
 
 // ── Format helpers ─────────────────────────────────────────
@@ -2449,8 +2527,28 @@ function renderDonorSection(donors, lembagaName) {
     }
 
     currentDonorPage = 1;
-    donorSort = { col: -1, dir: 'asc' };
+    donorSort        = { col: -1, dir: 'asc' };
+    donorSearchQuery = '';  // reset pencarian saat ganti lembaga
     renderDonorTable(donors);
+}
+
+// ── Pencarian donatur (dipanggil oninput dari search box) ──────
+function donorSearch(val) {
+    if (_donorSearchTimer) clearTimeout(_donorSearchTimer);
+    _donorSearchTimer = setTimeout(function() {
+        donorSearchQuery = (val || '').trim().toLowerCase();
+        currentDonorPage = 1;
+        var donorArea = document.getElementById('donor-area');
+        if (donorArea && donorArea._donors) renderDonorTable(donorArea._donors);
+    }, 150); // debounce 150ms
+}
+
+// ── Highlight keyword dalam teks ──────────────────────────────
+function highlightDonor(text, query) {
+    if (!query || !text) return text || '';
+    var escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return String(text).replace(new RegExp('(' + escaped + ')', 'gi'),
+        '<mark style="background:rgba(234,179,8,.35);color:inherit;border-radius:2px;padding:0 1px;">$1</mark>');
 }
 
 // ── Parse tanggal donor ke timestamp ────────────────────────
@@ -2499,11 +2597,27 @@ function parseDateTgl(str) {
 }
 
 function getDonorSorted(donors) {
-    if (donorSort.col < 0) return donors.slice();
-    return donors.slice().sort(function(a, b) {
+    // 1. Filter berdasarkan pencarian
+    var filtered = donors;
+    if (donorSearchQuery) {
+        var q = donorSearchQuery;
+        filtered = donors.filter(function(d) {
+            var tgl  = (d.tgl   || '').toLowerCase();
+            var nama = (d.nama  || '').toLowerCase();
+            var nom  = String(d.nominal || '').toLowerCase();
+            var nomFmt = formatRpFull(d.nominal || 0).toLowerCase().replace(/[^0-9a-z]/g, '');
+            // Juga cocokkan nominal tanpa titik/koma agar "25000" cocok dengan "25.000"
+            var qClean = q.replace(/[^0-9a-z]/g, '');
+            return tgl.indexOf(q) > -1 || nama.indexOf(q) > -1 ||
+                   nom.indexOf(q) > -1 || nomFmt.indexOf(qClean) > -1;
+        });
+    }
+
+    // 2. Sort
+    if (donorSort.col < 0) return filtered;
+    return filtered.slice().sort(function(a, b) {
         var va, vb;
         if (donorSort.col === 1) {
-            // Urutkan berdasarkan nilai tanggal sebenarnya
             va = parseDateTgl(a.tgl);
             vb = parseDateTgl(b.tgl);
             return donorSort.dir === 'asc' ? va - vb : vb - va;
@@ -2538,18 +2652,21 @@ function renderDonorTable(donors) {
     var donorArea = document.getElementById('donor-area');
     if (!donorArea) return;
 
-    var sorted = getDonorSorted(donors);
-    var total   = sorted.length;
-    var isAll   = DONOR_PER_PAGE >= 999999;
-    var totPages = isAll ? 1 : Math.max(1, Math.ceil(total / DONOR_PER_PAGE));
+    var sorted = getDonorSorted(donors); // sudah termasuk filter pencarian
+    var total      = sorted.length;
+    var totalAll   = donors.length;      // total sebelum filter
+    var isFiltered = donorSearchQuery && total !== totalAll;
+    var isAll      = DONOR_PER_PAGE >= 999999;
+    var totPages   = isAll ? 1 : Math.max(1, Math.ceil(total / DONOR_PER_PAGE));
     if (currentDonorPage > totPages) currentDonorPage = totPages;
 
     var start = (currentDonorPage - 1) * (isAll ? total : DONOR_PER_PAGE);
     var end   = isAll ? total : Math.min(start + DONOR_PER_PAGE, total);
     var slice = sorted.slice(start, end);
 
-    // Hitung total nominal (dari SEMUA data, bukan hanya halaman ini)
-    var grandTotal = donors.reduce(function(s, d) { return s + (d.nominal || 0); }, 0);
+    // Grand total: dari data yang terfilter (bukan semua)
+    var grandTotal    = sorted.reduce(function(s, d) { return s + (d.nominal || 0); }, 0);
+    var grandTotalAll = donors.reduce(function(s, d) { return s + (d.nominal || 0); }, 0);
 
     // ── Sort indicator helper ──
     function sortIcon(col) {
@@ -2559,17 +2676,25 @@ function renderDonorTable(donors) {
             : '<i class="bx bx-sort-down" style="color:var(--gold);font-size:.8rem;margin-left:4px;"></i>';
     }
 
+    // ── Highlight helper lokal ──
+    var q = donorSearchQuery;
+    function hl(text) { return highlightDonor(text, q); }
+
     // Baris tabel
     var rows = '';
-    slice.forEach(function(d, idx) {
-        var isNegTrx = d.nominal < 0;
-        rows += '<tr' + (isNegTrx ? ' style="background:rgba(220,38,38,0.04);"' : '') + '>' +
-            '<td style="text-align:center;color:var(--muted);">' + (start + idx + 1) + '</td>' +
-            '<td><span class="tgl-badge">' + (d.tgl || '-') + '</span></td>' +
-            '<td>' + capitalize(d.nama || '-') + (isNegTrx ? ' <span style="font-size:0.7rem;color:#dc2626;font-weight:600;">(Pengeluaran)</span>' : '') + '</td>' +
-            '<td style="' + (isNegTrx ? 'color:#dc2626;font-weight:600;' : '') + '">' + (d.nominal !== 0 ? formatRpFull(d.nominal) : '-') + '</td>' +
-        '</tr>';
-    });
+    if (total === 0 && q) {
+        rows = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);"><i class="bx bx-search-alt" style="font-size:1.6rem;display:block;margin-bottom:6px;"></i>Tidak ada donatur yang cocok dengan <strong>"' + q + '"</strong></td></tr>';
+    } else {
+        slice.forEach(function(d, idx) {
+            var isNegTrx = d.nominal < 0;
+            rows += '<tr' + (isNegTrx ? ' style="background:rgba(220,38,38,0.04);"' : '') + '>' +
+                '<td style="text-align:center;color:var(--muted);">' + (start + idx + 1) + '</td>' +
+                '<td><span class="tgl-badge">' + hl(d.tgl || '-') + '</span></td>' +
+                '<td>' + hl(capitalize(d.nama || '-')) + (isNegTrx ? ' <span style="font-size:0.7rem;color:#dc2626;font-weight:600;">(Pengeluaran)</span>' : '') + '</td>' +
+                '<td style="' + (isNegTrx ? 'color:#dc2626;font-weight:600;' : '') + '">' + hl(d.nominal !== 0 ? formatRpFull(d.nominal) : '-') + '</td>' +
+            '</tr>';
+        });
+    }
 
     // ── Dropdown tampilkan ──
     var dpVal = isAll ? 'all' : String(DONOR_PER_PAGE);
@@ -2604,26 +2729,55 @@ function renderDonorTable(donors) {
     // Hitung rata-rata transaksi
     var avgTrx = total > 0 ? grandTotal / total : 0;
 
+    // ── Stats (pakai data terfilter jika ada pencarian) ──
+    var avgTrx = total > 0 ? grandTotal / total : 0;
+
+    // ── Footer total label ──
+    var footerLabel = isFiltered
+        ? 'Total (' + total + ' hasil)'
+        : 'Total Donasi';
+    var footerTotal = isFiltered
+        ? formatRpFull(grandTotal) + ' <span style="font-size:.7rem;color:var(--muted);font-weight:400;">dari ' + formatRpFull(grandTotalAll) + '</span>'
+        : formatRpFull(grandTotal);
+
     donorArea.innerHTML =
         '<div class="donor-card">' +
-            // ── Stats bar paling atas ──
-            '<div class="section-title" style="padding: 0 0 14px 0; border-bottom: 1px solid var(--border); margin-bottom: 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">' +
+            // ── Header ──
+            '<div class="section-title" style="padding:0 0 14px 0;border-bottom:1px solid var(--border);margin-bottom:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
                 '<span><i class="bx bx-user-circle"></i>Detail Donatur</span>' +
-                '<button onclick="reloadCurrentDonorDetail(true)" style="background:var(--light); border:1px solid var(--border); color:var(--navy); font-family:\'Poppins\',sans-serif; font-size:.78rem; font-weight:500; border-radius:20px; padding:4px 12px; display:inline-flex; align-items:center; gap:4px; cursor:pointer; transition:all .2s ease;" title="Sinkronkan ulang detail donatur sheet ini">' +
+                '<button onclick="reloadCurrentDonorDetail(true)" style="background:var(--light);border:1px solid var(--border);color:var(--navy);font-family:\'Poppins\',sans-serif;font-size:.78rem;font-weight:500;border-radius:20px;padding:4px 12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:all .2s ease;" title="Sinkronkan ulang detail donatur sheet ini">' +
                     '<i class="bx bx-refresh"></i> Refresh Donatur' +
                 '</button>' +
             '</div>' +
+            // ── Stats bar ──
             '<div class="donor-stats-bar">' +
                 '<div class="donor-stat-item">' +
                     '<div class="donor-stat-label">Jumlah Transaksi</div>' +
-                    '<div class="donor-stat-value teal">' + total.toLocaleString('id-ID') + ' <span style="font-size:.72rem;font-weight:500;color:var(--muted);">transaksi</span></div>' +
+                    '<div class="donor-stat-value teal">' +
+                        (isFiltered
+                            ? '<span style="font-size:1rem;font-weight:700;">' + total + '</span> <span style="font-size:.72rem;color:var(--muted);">dari ' + totalAll + '</span>'
+                            : total.toLocaleString('id-ID') + ' <span style="font-size:.72rem;font-weight:500;color:var(--muted);">transaksi</span>') +
+                    '</div>' +
                 '</div>' +
                 '<div class="donor-stat-item">' +
                     '<div class="donor-stat-label">Rata-rata Transaksi</div>' +
                     '<div class="donor-stat-value gold">' + formatRp(avgTrx) + '</div>' +
                 '</div>' +
             '</div>' +
-            // ── Tabel (scroll bersama judul kolom) ──
+            // ── Search Box ──
+            '<div class="donor-search-wrap">' +
+                '<div class="donor-search-box">' +
+                    '<i class="bx bx-search donor-search-icon"></i>' +
+                    '<input type="text" id="donor-search-input" class="donor-search-input"' +
+                        ' placeholder="Cari nama, tanggal, nominal..."' +
+                        ' value="' + (q ? q.replace(/"/g, '&quot;') : '') + '"' +
+                        ' oninput="donorSearch(this.value)"' +
+                        ' autocomplete="off">' +
+                    (q ? '<button class="donor-search-clear" onclick="donorSearch(\'\');document.getElementById(\'donor-search-input\').value=\'\';" title="Hapus pencarian"><i class="bx bx-x"></i></button>' : '') +
+                '</div>' +
+                (isFiltered ? '<span class="donor-search-badge">' + total + ' hasil ditemukan</span>' : '') +
+            '</div>' +
+            // ── Tabel ──
             '<div class="table-responsive">' +
             '<table class="donor-table">' +
                 '<thead><tr>' +
@@ -2634,12 +2788,18 @@ function renderDonorTable(donors) {
                 '</tr></thead>' +
                 '<tbody>' + rows + '</tbody>' +
                 '<tfoot><tr class="tfoot-row">' +
-                    '<td colspan="3" style="text-align:right;padding-right:14px;">Total Donasi</td>' +
-                    '<td>' + formatRpFull(grandTotal) + '</td>' +
+                    '<td colspan="3" style="text-align:right;padding-right:14px;">' + footerLabel + '</td>' +
+                    '<td>' + footerTotal + '</td>' +
                 '</tr></tfoot>' +
             '</table></div>' +
             '<div class="donor-pg-wrap">' + pgInfo + (pgBtns || '') + selectHtml + '</div>' +
         '</div>';
+
+    // Pertahankan fokus cursor di search box setelah re-render
+    if (q) {
+        var inp = document.getElementById('donor-search-input');
+        if (inp) { inp.focus(); var len = inp.value.length; inp.setSelectionRange(len, len); }
+    }
 
     donorArea._donors = donors;
 }
@@ -2647,8 +2807,9 @@ function renderDonorTable(donors) {
 function donorChangePage(p) {
     var donorArea = document.getElementById('donor-area');
     if (!donorArea || !donorArea._donors) return;
-    var isAll = DONOR_PER_PAGE >= 999999;
-    var totPages = isAll ? 1 : Math.max(1, Math.ceil(donorArea._donors.length / DONOR_PER_PAGE));
+    var sorted   = getDonorSorted(donorArea._donors); // pakai data terfilter
+    var isAll    = DONOR_PER_PAGE >= 999999;
+    var totPages = isAll ? 1 : Math.max(1, Math.ceil(sorted.length / DONOR_PER_PAGE));
     if (p < 1 || p > totPages) return;
     currentDonorPage = p;
     renderDonorTable(donorArea._donors);
