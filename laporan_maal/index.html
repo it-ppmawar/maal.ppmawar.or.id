@@ -2533,14 +2533,16 @@ function renderDonorSection(donors, lembagaName) {
 }
 
 // ── Pencarian donatur (dipanggil oninput dari search box) ──────
+// Catatan: sengaja memanggil renderDonorBody (bukan renderDonorTable)
+// agar search input TIDAK di-recreate → tidak ada lag/hilang fokus
 function donorSearch(val) {
     if (_donorSearchTimer) clearTimeout(_donorSearchTimer);
     _donorSearchTimer = setTimeout(function() {
         donorSearchQuery = (val || '').trim().toLowerCase();
         currentDonorPage = 1;
         var donorArea = document.getElementById('donor-area');
-        if (donorArea && donorArea._donors) renderDonorTable(donorArea._donors);
-    }, 150); // debounce 150ms
+        if (donorArea && donorArea._donors) renderDonorBody(donorArea._donors);
+    }, 0); // 0ms — yield ke browser dulu, lalu proses
 }
 
 // ── Highlight keyword dalam teks ──────────────────────────────
@@ -2638,23 +2640,91 @@ function donorSortBy(col) {
     }
     currentDonorPage = 1;
     var donorArea = document.getElementById('donor-area');
-    if (donorArea && donorArea._donors) renderDonorTable(donorArea._donors);
+    if (donorArea && donorArea._donors) renderDonorBody(donorArea._donors);
 }
 
 function donorChangeRows(val) {
     DONOR_PER_PAGE = (val === 'all') ? 999999 : (parseInt(val) || 25);
     currentDonorPage = 1;
     var donorArea = document.getElementById('donor-area');
-    if (donorArea && donorArea._donors) renderDonorTable(donorArea._donors);
+    if (donorArea && donorArea._donors) renderDonorBody(donorArea._donors);
 }
 
-function renderDonorTable(donors) {
+// ═══════════════════════════════════════════════════════════════
+// renderDonorCard — Render penuh 1x saat data pertama tiba
+//   Membuat kerangka HTML stabil dengan ID tetap agar elemen
+//   di dalamnya bisa diupdate tanpa destroy/recreate.
+// ═══════════════════════════════════════════════════════════════
+function renderDonorCard(donors) {
     var donorArea = document.getElementById('donor-area');
     if (!donorArea) return;
 
-    var sorted = getDonorSorted(donors); // sudah termasuk filter pencarian
+    donorArea.innerHTML =
+        '<div class="donor-card">' +
+            // ── Header ──
+            '<div class="section-title" style="padding:0 0 14px 0;border-bottom:1px solid var(--border);margin-bottom:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+                '<span><i class="bx bx-user-circle"></i>Detail Donatur</span>' +
+                '<button onclick="reloadCurrentDonorDetail(true)" style="background:var(--light);border:1px solid var(--border);color:var(--navy);font-family:\'Poppins\',sans-serif;font-size:.78rem;font-weight:500;border-radius:20px;padding:4px 12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:all .2s ease;" title="Sinkronkan ulang">' +
+                    '<i class="bx bx-refresh"></i> Refresh Donatur' +
+                '</button>' +
+            '</div>' +
+            // ── Stats bar — nilainya diupdate oleh renderDonorBody ──
+            '<div class="donor-stats-bar">' +
+                '<div class="donor-stat-item">' +
+                    '<div class="donor-stat-label">Jumlah Transaksi</div>' +
+                    '<div id="donor-stat-count" class="donor-stat-value teal"></div>' +
+                '</div>' +
+                '<div class="donor-stat-item">' +
+                    '<div class="donor-stat-label">Rata-rata Transaksi</div>' +
+                    '<div id="donor-stat-avg" class="donor-stat-value gold"></div>' +
+                '</div>' +
+            '</div>' +
+            // ── Search Box — STABIL, tidak pernah di-recreate ──
+            '<div class="donor-search-wrap">' +
+                '<div class="donor-search-box">' +
+                    '<i class="bx bx-search donor-search-icon"></i>' +
+                    '<input type="text" id="donor-search-input" class="donor-search-input"' +
+                        ' placeholder="Cari nama, tanggal, nominal..."' +
+                        ' oninput="donorSearch(this.value)"' +
+                        ' autocomplete="off">' +
+                    '<button id="donor-search-clear" class="donor-search-clear" onclick="donorClearSearch()" title="Hapus pencarian" style="display:none;"><i class="bx bx-x"></i></button>' +
+                '</div>' +
+                '<span id="donor-search-badge" class="donor-search-badge" style="display:none;"></span>' +
+            '</div>' +
+            // ── Tabel — thead stabil, tbody/tfoot diupdate oleh renderDonorBody ──
+            '<div class="table-responsive">' +
+            '<table class="donor-table">' +
+                '<thead id="donor-thead"><tr>' +
+                    '<th style="text-align:center;width:44px;">No</th>' +
+                    '<th style="width:130px;cursor:pointer;user-select:none;" onclick="donorSortBy(1)">Tanggal <i id="dsort-1" class="bx bx-sort" style="opacity:.35;font-size:.8rem;margin-left:4px;"></i></th>' +
+                    '<th style="cursor:pointer;user-select:none;" onclick="donorSortBy(2)">Nama Donatur <i id="dsort-2" class="bx bx-sort" style="opacity:.35;font-size:.8rem;margin-left:4px;"></i></th>' +
+                    '<th style="width:160px;cursor:pointer;user-select:none;" onclick="donorSortBy(3)">Nominal <i id="dsort-3" class="bx bx-sort" style="opacity:.35;font-size:.8rem;margin-left:4px;"></i></th>' +
+                '</tr></thead>' +
+                '<tbody id="donor-tbody"></tbody>' +
+                '<tfoot><tr class="tfoot-row">' +
+                    '<td colspan="3" style="text-align:right;padding-right:14px;"><span id="donor-foot-label">Total Donasi</span></td>' +
+                    '<td id="donor-foot-total"></td>' +
+                '</tr></tfoot>' +
+            '</table></div>' +
+            '<div id="donor-pg-wrap" class="donor-pg-wrap"></div>' +
+        '</div>';
+
+    donorArea._donors = donors;
+    renderDonorBody(donors); // isi data pertama kali
+}
+
+// ═══════════════════════════════════════════════════════════════
+// renderDonorBody — Update surgical (tanpa menyentuh search input)
+//   Dipanggil saat: search, sort, ganti halaman, ganti jumlah baris
+// ═══════════════════════════════════════════════════════════════
+function renderDonorBody(donors) {
+    var donorArea = document.getElementById('donor-area');
+    if (!donorArea) return;
+    donorArea._donors = donors;
+
+    var sorted     = getDonorSorted(donors);
     var total      = sorted.length;
-    var totalAll   = donors.length;      // total sebelum filter
+    var totalAll   = donors.length;
     var isFiltered = donorSearchQuery && total !== totalAll;
     var isAll      = DONOR_PER_PAGE >= 999999;
     var totPages   = isAll ? 1 : Math.max(1, Math.ceil(total / DONOR_PER_PAGE));
@@ -2664,39 +2734,65 @@ function renderDonorTable(donors) {
     var end   = isAll ? total : Math.min(start + DONOR_PER_PAGE, total);
     var slice = sorted.slice(start, end);
 
-    // Grand total: dari data yang terfilter (bukan semua)
     var grandTotal    = sorted.reduce(function(s, d) { return s + (d.nominal || 0); }, 0);
     var grandTotalAll = donors.reduce(function(s, d) { return s + (d.nominal || 0); }, 0);
+    var avgTrx        = total > 0 ? grandTotal / total : 0;
+    var q             = donorSearchQuery;
 
-    // ── Sort indicator helper ──
-    function sortIcon(col) {
-        if (donorSort.col !== col) return '<i class="bx bx-sort" style="opacity:.35;font-size:.8rem;margin-left:4px;"></i>';
-        return donorSort.dir === 'asc'
-            ? '<i class="bx bx-sort-up" style="color:var(--gold);font-size:.8rem;margin-left:4px;"></i>'
-            : '<i class="bx bx-sort-down" style="color:var(--gold);font-size:.8rem;margin-left:4px;"></i>';
-    }
+    // 1. Stats
+    var elCount = document.getElementById('donor-stat-count');
+    var elAvg   = document.getElementById('donor-stat-avg');
+    if (elCount) elCount.innerHTML = isFiltered
+        ? '<span style="font-size:1rem;font-weight:700;">' + total + '</span> <span style="font-size:.72rem;color:var(--muted);">dari ' + totalAll + '</span>'
+        : total.toLocaleString('id-ID') + ' <span style="font-size:.72rem;font-weight:500;color:var(--muted);">transaksi</span>';
+    if (elAvg) elAvg.innerHTML = formatRp(avgTrx);
 
-    // ── Highlight helper lokal ──
-    var q = donorSearchQuery;
-    function hl(text) { return highlightDonor(text, q); }
+    // 2. Search badge & clear button
+    var elBadge = document.getElementById('donor-search-badge');
+    var elClear = document.getElementById('donor-search-clear');
+    if (elBadge) { elBadge.textContent = total + ' hasil ditemukan'; elBadge.style.display = isFiltered ? '' : 'none'; }
+    if (elClear) elClear.style.display = q ? '' : 'none';
 
-    // Baris tabel
+    // 3. Sort icons
+    [1, 2, 3].forEach(function(col) {
+        var el = document.getElementById('dsort-' + col);
+        if (!el) return;
+        el.className = donorSort.col === col
+            ? (donorSort.dir === 'asc' ? 'bx bx-sort-up' : 'bx bx-sort-down')
+            : 'bx bx-sort';
+        el.style.color   = donorSort.col === col ? 'var(--gold)' : '';
+        el.style.opacity = donorSort.col === col ? '1' : '.35';
+        el.style.fontSize      = '.8rem';
+        el.style.marginLeft    = '4px';
+    });
+
+    // 4. Tbody rows
     var rows = '';
     if (total === 0 && q) {
-        rows = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);"><i class="bx bx-search-alt" style="font-size:1.6rem;display:block;margin-bottom:6px;"></i>Tidak ada donatur yang cocok dengan <strong>"' + q + '"</strong></td></tr>';
+        rows = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);"><i class="bx bx-search-alt" style="font-size:1.6rem;display:block;margin-bottom:6px;"></i>Tidak ada donatur cocok dengan <strong>"' + q + '"</strong></td></tr>';
     } else {
         slice.forEach(function(d, idx) {
-            var isNegTrx = d.nominal < 0;
-            rows += '<tr' + (isNegTrx ? ' style="background:rgba(220,38,38,0.04);"' : '') + '>' +
+            var neg = d.nominal < 0;
+            rows += '<tr' + (neg ? ' style="background:rgba(220,38,38,0.04);"' : '') + '>' +
                 '<td style="text-align:center;color:var(--muted);">' + (start + idx + 1) + '</td>' +
-                '<td><span class="tgl-badge">' + hl(d.tgl || '-') + '</span></td>' +
-                '<td>' + hl(capitalize(d.nama || '-')) + (isNegTrx ? ' <span style="font-size:0.7rem;color:#dc2626;font-weight:600;">(Pengeluaran)</span>' : '') + '</td>' +
-                '<td style="' + (isNegTrx ? 'color:#dc2626;font-weight:600;' : '') + '">' + hl(d.nominal !== 0 ? formatRpFull(d.nominal) : '-') + '</td>' +
+                '<td><span class="tgl-badge">' + highlightDonor(d.tgl || '-', q) + '</span></td>' +
+                '<td>' + highlightDonor(capitalize(d.nama || '-'), q) + (neg ? ' <span style="font-size:.7rem;color:#dc2626;font-weight:600;">(Pengeluaran)</span>' : '') + '</td>' +
+                '<td style="' + (neg ? 'color:#dc2626;font-weight:600;' : '') + '">' + highlightDonor(d.nominal !== 0 ? formatRpFull(d.nominal) : '-', q) + '</td>' +
             '</tr>';
         });
     }
+    var elTbody = document.getElementById('donor-tbody');
+    if (elTbody) elTbody.innerHTML = rows;
 
-    // ── Dropdown tampilkan ──
+    // 5. Footer
+    var elLabel = document.getElementById('donor-foot-label');
+    var elTotal = document.getElementById('donor-foot-total');
+    if (elLabel) elLabel.textContent = isFiltered ? 'Total (' + total + ' hasil)' : 'Total Donasi';
+    if (elTotal) elTotal.innerHTML  = isFiltered
+        ? formatRpFull(grandTotal) + ' <span style="font-size:.7rem;color:var(--muted);font-weight:400;">dari ' + formatRpFull(grandTotalAll) + '</span>'
+        : formatRpFull(grandTotal);
+
+    // 6. Pagination + dropdown
     var dpVal = isAll ? 'all' : String(DONOR_PER_PAGE);
     var selectHtml = '<div class="row-select-wrap">' +
         '<label>Tampilkan:</label>' +
@@ -2705,10 +2801,7 @@ function renderDonorTable(donors) {
             '<option value="50"'  + (dpVal==='50'  ?' selected':'') + '>50 baris</option>' +
             '<option value="100"' + (dpVal==='100' ?' selected':'') + '>100 baris</option>' +
             '<option value="all"' + (dpVal==='all' ?' selected':'') + '>Semua</option>' +
-        '</select>' +
-    '</div>';
-
-    // ── Pagination ──
+        '</select></div>';
     var pgInfo = '<span class="pg-info">Menampilkan ' + (total===0?0:start+1) + '\u2013' + end + ' dari ' + total + ' donatur</span>';
     var pgBtns = '';
     if (!isAll && totPages > 1) {
@@ -2717,102 +2810,38 @@ function renderDonorTable(donors) {
         var sp = Math.max(1, currentDonorPage-2), ep = Math.min(totPages, currentDonorPage+2);
         if (sp > 1) pgBtns += '<button class="pg-btn" onclick="donorChangePage(1)">1</button>';
         if (sp > 2) pgBtns += '<span style="color:#aab;padding:0 4px;">\u2026</span>';
-        for (var p = sp; p <= ep; p++) {
-            pgBtns += '<button class="pg-btn' + (p===currentDonorPage?' active':'') + '" onclick="donorChangePage(' + p + ')">' + p + '</button>';
-        }
+        for (var p = sp; p <= ep; p++) pgBtns += '<button class="pg-btn' + (p===currentDonorPage?' active':'') + '" onclick="donorChangePage(' + p + ')">' + p + '</button>';
         if (ep < totPages-1) pgBtns += '<span style="color:#aab;padding:0 4px;">\u2026</span>';
         if (ep < totPages)   pgBtns += '<button class="pg-btn" onclick="donorChangePage(' + totPages + ')">' + totPages + '</button>';
         pgBtns += '<button class="pg-btn" onclick="donorChangePage(' + (currentDonorPage+1) + ')" ' + (currentDonorPage>=totPages?'disabled':'') + '><i class="bx bx-chevron-right"></i></button>';
         pgBtns += '</div>';
     }
-
-    // Hitung rata-rata transaksi
-    var avgTrx = total > 0 ? grandTotal / total : 0;
-
-    // ── Stats (pakai data terfilter jika ada pencarian) ──
-    var avgTrx = total > 0 ? grandTotal / total : 0;
-
-    // ── Footer total label ──
-    var footerLabel = isFiltered
-        ? 'Total (' + total + ' hasil)'
-        : 'Total Donasi';
-    var footerTotal = isFiltered
-        ? formatRpFull(grandTotal) + ' <span style="font-size:.7rem;color:var(--muted);font-weight:400;">dari ' + formatRpFull(grandTotalAll) + '</span>'
-        : formatRpFull(grandTotal);
-
-    donorArea.innerHTML =
-        '<div class="donor-card">' +
-            // ── Header ──
-            '<div class="section-title" style="padding:0 0 14px 0;border-bottom:1px solid var(--border);margin-bottom:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
-                '<span><i class="bx bx-user-circle"></i>Detail Donatur</span>' +
-                '<button onclick="reloadCurrentDonorDetail(true)" style="background:var(--light);border:1px solid var(--border);color:var(--navy);font-family:\'Poppins\',sans-serif;font-size:.78rem;font-weight:500;border-radius:20px;padding:4px 12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:all .2s ease;" title="Sinkronkan ulang detail donatur sheet ini">' +
-                    '<i class="bx bx-refresh"></i> Refresh Donatur' +
-                '</button>' +
-            '</div>' +
-            // ── Stats bar ──
-            '<div class="donor-stats-bar">' +
-                '<div class="donor-stat-item">' +
-                    '<div class="donor-stat-label">Jumlah Transaksi</div>' +
-                    '<div class="donor-stat-value teal">' +
-                        (isFiltered
-                            ? '<span style="font-size:1rem;font-weight:700;">' + total + '</span> <span style="font-size:.72rem;color:var(--muted);">dari ' + totalAll + '</span>'
-                            : total.toLocaleString('id-ID') + ' <span style="font-size:.72rem;font-weight:500;color:var(--muted);">transaksi</span>') +
-                    '</div>' +
-                '</div>' +
-                '<div class="donor-stat-item">' +
-                    '<div class="donor-stat-label">Rata-rata Transaksi</div>' +
-                    '<div class="donor-stat-value gold">' + formatRp(avgTrx) + '</div>' +
-                '</div>' +
-            '</div>' +
-            // ── Search Box ──
-            '<div class="donor-search-wrap">' +
-                '<div class="donor-search-box">' +
-                    '<i class="bx bx-search donor-search-icon"></i>' +
-                    '<input type="text" id="donor-search-input" class="donor-search-input"' +
-                        ' placeholder="Cari nama, tanggal, nominal..."' +
-                        ' value="' + (q ? q.replace(/"/g, '&quot;') : '') + '"' +
-                        ' oninput="donorSearch(this.value)"' +
-                        ' autocomplete="off">' +
-                    (q ? '<button class="donor-search-clear" onclick="donorSearch(\'\');document.getElementById(\'donor-search-input\').value=\'\';" title="Hapus pencarian"><i class="bx bx-x"></i></button>' : '') +
-                '</div>' +
-                (isFiltered ? '<span class="donor-search-badge">' + total + ' hasil ditemukan</span>' : '') +
-            '</div>' +
-            // ── Tabel ──
-            '<div class="table-responsive">' +
-            '<table class="donor-table">' +
-                '<thead><tr>' +
-                    '<th style="text-align:center;width:44px;">No</th>' +
-                    '<th style="width:130px;cursor:pointer;user-select:none;" onclick="donorSortBy(1)">Tanggal ' + sortIcon(1) + '</th>' +
-                    '<th style="cursor:pointer;user-select:none;" onclick="donorSortBy(2)">Nama Donatur ' + sortIcon(2) + '</th>' +
-                    '<th style="width:160px;cursor:pointer;user-select:none;" onclick="donorSortBy(3)">Nominal ' + sortIcon(3) + '</th>' +
-                '</tr></thead>' +
-                '<tbody>' + rows + '</tbody>' +
-                '<tfoot><tr class="tfoot-row">' +
-                    '<td colspan="3" style="text-align:right;padding-right:14px;">' + footerLabel + '</td>' +
-                    '<td>' + footerTotal + '</td>' +
-                '</tr></tfoot>' +
-            '</table></div>' +
-            '<div class="donor-pg-wrap">' + pgInfo + (pgBtns || '') + selectHtml + '</div>' +
-        '</div>';
-
-    // Pertahankan fokus cursor di search box setelah re-render
-    if (q) {
-        var inp = document.getElementById('donor-search-input');
-        if (inp) { inp.focus(); var len = inp.value.length; inp.setSelectionRange(len, len); }
-    }
-
-    donorArea._donors = donors;
+    var elPg = document.getElementById('donor-pg-wrap');
+    if (elPg) elPg.innerHTML = pgInfo + (pgBtns || '') + selectHtml;
 }
+
+// Hapus pencarian (clear button)
+function donorClearSearch() {
+    donorSearchQuery = '';
+    var inp = document.getElementById('donor-search-input');
+    if (inp) { inp.value = ''; inp.focus(); }
+    currentDonorPage = 1;
+    var donorArea = document.getElementById('donor-area');
+    if (donorArea && donorArea._donors) renderDonorBody(donorArea._donors);
+}
+
+// Alias lama agar kode lain yang masih memanggil renderDonorTable tetap bekerja
+function renderDonorTable(donors) { renderDonorCard(donors); }
 
 function donorChangePage(p) {
     var donorArea = document.getElementById('donor-area');
     if (!donorArea || !donorArea._donors) return;
-    var sorted   = getDonorSorted(donorArea._donors); // pakai data terfilter
+    var sorted   = getDonorSorted(donorArea._donors);
     var isAll    = DONOR_PER_PAGE >= 999999;
     var totPages = isAll ? 1 : Math.max(1, Math.ceil(sorted.length / DONOR_PER_PAGE));
     if (p < 1 || p > totPages) return;
     currentDonorPage = p;
-    renderDonorTable(donorArea._donors);
+    renderDonorBody(donorArea._donors);
     donorArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
