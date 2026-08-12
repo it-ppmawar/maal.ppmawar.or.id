@@ -2235,7 +2235,7 @@ function getCertInfo(name) {
                             }
                         }
                         var bulanLabel = data.bulan ? ' (' + data.bulan + ')' : '';
-                        return '<div class="cert-desc">Sertifikat atas nama <em>' + displayName + '</em> (Terbaru). Perolehan bulan terkini' + bulanLabel + ': <strong>' + formatRpFull(latestMonthNominal) + '</strong>. Akumulasi terakhir: <strong>' + formatRpFull(total) + '</strong>.</div>';
+                        return '<div class="cert-desc">Sertifikat atas nama <em>' + displayName + '</em> (Terbaru). Perolehan tahun berjalan hingga bulan terkini' + bulanLabel + ': <strong>' + formatRpFull(latestMonthNominal) + '</strong>. Akumulasi terakhir: <strong>' + formatRpFull(total) + '</strong>.</div>';
                     })() +
                     '<div class="cert-actions">' +
                         '<button onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')" class="btn-cert-primary"><i class="bx bx-fullscreen"></i> Perbesar Pratinjau</button>' +
