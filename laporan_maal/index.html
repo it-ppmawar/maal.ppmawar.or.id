@@ -1879,46 +1879,64 @@ function parseCSVDirect(rows) {
     }
     
     // ── Generate 'transaksi' untuk tabel & chart ─────────────
+    var now = new Date();
+    var currentYear = now.getFullYear();
+    var dayStr = ('0' + now.getDate()).slice(-2);
+    var monthStr = ('0' + (now.getMonth() + 1)).slice(-2);
+    var tglBerjalan = dayStr + '/' + monthStr + '/' + currentYear;
+
     Object.keys(result).forEach(function(k) {
         var inst = result[k];
         inst.transaksi = [];
         if (!inst.bulan) inst.bulan = currentMonthStr;
         
         if (inst.yearly && inst.yearly.length > 0) {
+            var hasCurrentYear = false;
+
             // Baris perkembangan per tahun dari CSV1
             inst.yearly.forEach(function(yr, idx) {
-                var prev   = idx > 0 ? inst.yearly[idx - 1].nominal : 0;
-                var growth = yr.nominal - prev;
-                inst.transaksi.push({
-                    no:         idx + 1,
-                    tgl:        '31/12/' + yr.year,
-                    nama:       'Perkembangan ' + yr.year,
-                    nominal:    growth > 0 ? growth : 0,  // delta untuk chart kumulatif
-                    cumulative: yr.nominal                  // nilai penuh untuk tabel
-                });
-            });
-            // Tambahkan baris terkini dari CSV2 jika total lebih besar dari data tahunan
-            var lastYearly = inst.yearly[inst.yearly.length - 1];
-            if (inst.total > lastYearly.nominal) {
-                var now = new Date();
-                var dayStr = ('0' + now.getDate()).slice(-2);
-                var monthStr = ('0' + (now.getMonth() + 1)).slice(-2);
-                var tglBerjalan = dayStr + '/' + monthStr + '/' + now.getFullYear();
+                var prev = idx > 0 ? inst.yearly[idx - 1].nominal : 0;
+                var isCurrentYear = (yr.year === currentYear);
 
+                if (isCurrentYear) {
+                    hasCurrentYear = true;
+                    // Untuk tahun berjalan (2026), gunakan total akumulasi terkini (CSV2) jika ada
+                    var finalNominal = (inst.total > 0) ? inst.total : yr.nominal;
+                    var growth = finalNominal - prev;
+
+                    inst.transaksi.push({
+                        no:         idx + 1,
+                        tgl:        tglBerjalan,
+                        nama:       currentMonthStr,
+                        nominal:    growth > 0 ? growth : 0,
+                        cumulative: finalNominal
+                    });
+                } else {
+                    var growth = yr.nominal - prev;
+                    inst.transaksi.push({
+                        no:         idx + 1,
+                        tgl:        '31/12/' + yr.year,
+                        nama:       'Perkembangan ' + yr.year,
+                        nominal:    growth > 0 ? growth : 0,  // delta untuk chart kumulatif
+                        cumulative: yr.nominal                  // nilai penuh untuk tabel
+                    });
+                }
+            });
+
+            // Jika tahun berjalan belum ada di yearly data CSV1, namun total terkini > data tahunan terakhir
+            var lastYearly = inst.yearly[inst.yearly.length - 1];
+            if (!hasCurrentYear && inst.total > lastYearly.nominal) {
+                var prevNominal = lastYearly.nominal;
+                var growth = inst.total - prevNominal;
                 inst.transaksi.push({
                     no:         inst.transaksi.length + 1,
                     tgl:        tglBerjalan,
                     nama:       currentMonthStr,
-                    nominal:    inst.total - lastYearly.nominal,
+                    nominal:    growth > 0 ? growth : 0,
                     cumulative: inst.total
                 });
             }
         } else if (inst.total > 0) {
-            var now = new Date();
-            var dayStr = ('0' + now.getDate()).slice(-2);
-            var monthStr = ('0' + (now.getMonth() + 1)).slice(-2);
-            var tglBerjalan = dayStr + '/' + monthStr + '/' + now.getFullYear();
-
             // Lembaga baru — hanya punya data CSV2, tanpa riwayat tahunan
             inst.transaksi = [{
                 no:         1,
