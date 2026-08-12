@@ -2165,8 +2165,38 @@ function showLembaga(name) {
         html += '</div>';
     }
 
+function getCertInfo(name) {
+    if (!name || !CERT_DATA) return null;
+    if (CERT_DATA[name]) return CERT_DATA[name];
+    
+    var cleanName = name.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+    var keys = Object.keys(CERT_DATA);
+    
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+        if (cleanName === cleanK || cleanName.indexOf(cleanK) === 0 || cleanK.indexOf(cleanName) === 0) {
+            return CERT_DATA[k];
+        }
+    }
+    
+    var parts = cleanName.split(' ');
+    if (parts.length > 2) {
+        var subName = parts.slice(0, -1).join(' ');
+        for (var j = 0; j < keys.length; j++) {
+            var k2 = keys[j];
+            var cleanK2 = k2.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+            if (cleanK2 === subName || cleanK2.indexOf(subName) === 0 || subName.indexOf(cleanK2) === 0) {
+                return CERT_DATA[k2];
+            }
+        }
+    }
+    
+    return null;
+}
+
     // ── Render Certificate Card ─────────────────────────────────
-    var certInfo = CERT_DATA[name];
+    var certInfo = getCertInfo(name);
     if (certInfo && certInfo.certs && Object.keys(certInfo.certs).length > 0) {
         var certYears = Object.keys(certInfo.certs).map(Number);
         var latestYear = Math.max.apply(null, certYears);
