@@ -1748,11 +1748,18 @@ function parseCSVText(csvText) {
     return parseCSVDirect(rows);
 }
 
+function getCurrentMonthYear() {
+    var months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    var now = new Date();
+    return months[now.getMonth()] + ' ' + now.getFullYear();
+}
+
 // ── Parse from PapaParse rows directly ──────────────────────
 function parseCSVDirect(rows) {
     var result = {};
     var mode = null;
     var yearColumns = []; 
+    var currentMonthStr = getCurrentMonthYear();
 
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
@@ -1794,12 +1801,14 @@ function parseCSVDirect(rows) {
             // Skip jika col2 hanya angka (baris kosong / nomor saja)
             if (!isNaN(parseFloat(nama)) && isFinite(nama)) continue;
 
+            var rowNo1 = parseInt(String(row[1] || '').trim()) || 0;
             var vaBsi  = String(row[3] || '').trim();
             var vaLain = String(row[4] || '').trim();
             
             if (!result[nama]) {
-                result[nama] = { total: 0, bulan: '', va_bsi: '', va_lain: '', yearly: [], transaksi: [] };
+                result[nama] = { total: 0, bulan: currentMonthStr, va_bsi: '', va_lain: '', yearly: [], transaksi: [], _no: rowNo1 };
             }
+            if (rowNo1 > 0) result[nama]._no = rowNo1;
             if (vaBsi)  result[nama].va_bsi  = vaBsi;
             if (vaLain) result[nama].va_lain = vaLain;
             
@@ -1827,25 +1836,42 @@ function parseCSVDirect(rows) {
             // CSV2 pakai titik sebagai ribuan: "226.461.000" → cleanNumber sudah handle
             var nominal2 = cleanNumber(row[3]);
             
-            // Coba cocokkan ke entri CSV1: tambahkan prefix "WAKAF " dulu
+            // Coba cocokkan ke entri CSV1: tambahkan prefix "WAKAF " atau pencocokan fleksibel
             var targetKey = null;
             if (result['WAKAF ' + nama2] !== undefined) {
                 targetKey = 'WAKAF ' + nama2;   // ← cocok "WAKAF PPMA" dengan "PPMA"
             } else if (result[nama2] !== undefined) {
                 targetKey = nama2;               // ← cocok exact jika CSV1 tidak pakai prefix
+            } else {
+                // Pencocokan fleksibel (berdasarkan _no nomor urut atau kemiripan nama)
+                var keys = Object.keys(result);
+                for (var k = 0; k < keys.length; k++) {
+                    var kName = keys[k];
+                    var kObj = result[kName];
+                    var cleanK = kName.replace(/^WAKAF\s+/, '').replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim();
+                    var clean2 = nama2.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim();
+                    
+                    if (kObj._no === rowNo2 && rowNo2 > 0) {
+                        targetKey = kName;
+                        break;
+                    } else if (cleanK === clean2 || cleanK.indexOf(clean2) === 0 || clean2.indexOf(cleanK) === 0) {
+                        targetKey = kName;
+                        break;
+                    }
+                }
             }
             
             if (targetKey) {
                 // Perkaya entri CSV1 dengan data terkini dari CSV2
-                if (bulan2)   result[targetKey].bulan = bulan2;
+                result[targetKey].bulan = currentMonthStr;
                 if (nominal2 > 0) result[targetKey].total = nominal2;
                 if (rowNo2 > 0 && !result[targetKey]._no) result[targetKey]._no = rowNo2;
             } else {
                 // Lembaga baru yang hanya ada di CSV2 (belum ada di CSV1)
                 if (!result[nama2]) {
-                    result[nama2] = { total: 0, bulan: '', va_bsi: '', va_lain: '', yearly: [], transaksi: [], _no: rowNo2 };
+                    result[nama2] = { total: 0, bulan: currentMonthStr, va_bsi: '', va_lain: '', yearly: [], transaksi: [], _no: rowNo2 };
                 }
-                if (bulan2)   result[nama2].bulan = bulan2;
+                result[nama2].bulan = currentMonthStr;
                 if (nominal2 > 0) result[nama2].total = nominal2;
                 if (rowNo2 > 0 && !result[nama2]._no) result[nama2]._no = rowNo2;
             }
@@ -1856,6 +1882,7 @@ function parseCSVDirect(rows) {
     Object.keys(result).forEach(function(k) {
         var inst = result[k];
         inst.transaksi = [];
+        if (!inst.bulan) inst.bulan = currentMonthStr;
         
         if (inst.yearly && inst.yearly.length > 0) {
             // Baris perkembangan per tahun dari CSV1
@@ -1872,21 +1899,31 @@ function parseCSVDirect(rows) {
             });
             // Tambahkan baris terkini dari CSV2 jika total lebih besar dari data tahunan
             var lastYearly = inst.yearly[inst.yearly.length - 1];
-            if (inst.total > lastYearly.nominal && inst.bulan) {
+            if (inst.total > lastYearly.nominal) {
+                var now = new Date();
+                var dayStr = ('0' + now.getDate()).slice(-2);
+                var monthStr = ('0' + (now.getMonth() + 1)).slice(-2);
+                var tglBerjalan = dayStr + '/' + monthStr + '/' + now.getFullYear();
+
                 inst.transaksi.push({
                     no:         inst.transaksi.length + 1,
-                    tgl:        '30/06/2026',
-                    nama:       inst.bulan,
+                    tgl:        tglBerjalan,
+                    nama:       currentMonthStr,
                     nominal:    inst.total - lastYearly.nominal,
                     cumulative: inst.total
                 });
             }
         } else if (inst.total > 0) {
+            var now = new Date();
+            var dayStr = ('0' + now.getDate()).slice(-2);
+            var monthStr = ('0' + (now.getMonth() + 1)).slice(-2);
+            var tglBerjalan = dayStr + '/' + monthStr + '/' + now.getFullYear();
+
             // Lembaga baru — hanya punya data CSV2, tanpa riwayat tahunan
             inst.transaksi = [{
                 no:         1,
-                tgl:        '30/06/2026',
-                nama:       inst.bulan || 'Saldo Terkini',
+                tgl:        tglBerjalan,
+                nama:       currentMonthStr,
                 nominal:    inst.total,
                 cumulative: inst.total
             }];
