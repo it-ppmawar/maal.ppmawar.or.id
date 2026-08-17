@@ -3011,18 +3011,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load certificate mapping JSON
+    // ── Helper Parse Live Certificate CSV ──────────────────────
+    function parseCertCSV(csvText) {
+        if (!csvText) return;
+        var lines = csvText.trim().split('\n');
+        var count = 0;
+        for (var i = 1; i < lines.length; i++) {
+            var row = lines[i].trim();
+            if (!row) continue;
+            var cols = splitCSVLine(row);
+            if (cols.length < 3) continue;
+            var nama = cols[0].toUpperCase().trim();
+            var tahun = cols[1].trim();
+            var link = cols[2].trim();
+            if (!nama || !tahun || !link) continue;
+            if (!CERT_DATA[nama]) {
+                CERT_DATA[nama] = { name: nama, certs: {} };
+            }
+            if (!CERT_DATA[nama].certs) CERT_DATA[nama].certs = {};
+            CERT_DATA[nama].certs[tahun] = link;
+            count++;
+        }
+        console.log('[Cert] Live sync parsed', count, 'cert records for', Object.keys(CERT_DATA).length, 'institutions.');
+        if (currentName && ALL_DATA[currentName]) {
+            showLembaga(currentName);
+        }
+    }
+
+    // ── Load Certificate Mapping (Baseline + Live Sync) ─────────
     fetch('cert_links.json')
         .then(function(r) { return r.json(); })
         .then(function(data) {
             CERT_DATA = data;
-            console.log('[Cert] Loaded mapping for', Object.keys(CERT_DATA).length, 'institutions.');
+            console.log('[Cert] Loaded baseline for', Object.keys(CERT_DATA).length, 'institutions.');
             if (currentName && ALL_DATA[currentName]) {
                 showLembaga(currentName);
             }
         })
         .catch(function(err) {
-            console.warn('[Cert] Gagal memuat cert_links.json:', err.message);
+            console.warn('[Cert] Baseline cert_links.json fallback:', err.message);
+        })
+        .finally(function() {
+            // Live fetch from proxy or directly from published Google Sheets CSV
+            var certProxyUrl = (PROXY_URL.indexOf('?') !== -1 ? PROXY_URL + '&action=certs' : PROXY_URL + '?action=certs') + '&t=' + Date.now();
+            fetch(certProxyUrl)
+                .then(function(r) { return r.json(); })
+                .then(function(liveData) {
+                    if (liveData && Object.keys(liveData).length > 0) {
+                        CERT_DATA = Object.assign({}, CERT_DATA, liveData);
+                        console.log('[Cert] Live proxy sync loaded for', Object.keys(CERT_DATA).length, 'institutions.');
+                        if (currentName && ALL_DATA[currentName]) showLembaga(currentName);
+                    }
+                })
+                .catch(function() {
+                    var directCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=2086141628&single=true&output=csv';
+                    fetch(directCsvUrl)
+                        .then(function(r) { return r.text(); })
+                        .then(function(csvText) {
+                            if (csvText && csvText.indexOf('NAMA_REKENING') !== -1) {
+                                parseCertCSV(csvText);
+                            }
+                        })
+                        .catch(function(e) {
+                            console.log('[Cert] Using baseline certs:', e.message);
+                        });
+                });
         });
 
     // Load GID mapping dynamically from proxy

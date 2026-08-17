@@ -122,6 +122,75 @@ if (isset($_GET['action']) && $_GET['action'] === 'gids') {
     exit;
 }
 
+// ── Mode 4: API Endpoint untuk dynamic Certificate map ───────
+if (isset($_GET['action']) && $_GET['action'] === 'certs') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: public, max-age=300');
+
+    $certCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRYWArtmSJU9igeOkV-WvOk9x623BscfGYmXqc9a458gCXPGXMK4tQF7XRb-g5M_x9FQt_3Cg_hFdGz/pub?gid=2086141628&single=true&output=csv';
+    $cacheFile  = __DIR__ . '/csv_cache_certs_map.json';
+    $cacheTTL   = 300; // 5 menit
+
+    $forceFresh = isset($_GET['t']);
+    if (!$forceFresh && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTTL) {
+        echo file_get_contents($cacheFile);
+        exit;
+    }
+
+    $csv = fetchCsvData($certCsvUrl);
+    if (!empty($csv)) {
+        $lines = explode("\n", trim($csv));
+        $certMap = [];
+
+        $baseJsonFile = __DIR__ . '/cert_links.json';
+        if (file_exists($baseJsonFile)) {
+            $certMap = json_decode(file_get_contents($baseJsonFile), true) ?: [];
+        }
+
+        for ($i = 1; $i < count($lines); $i++) {
+            $line = trim($lines[$i]);
+            if (empty($line)) continue;
+            $cols = str_getcsv($line);
+            if (count($cols) < 3) continue;
+
+            $nama = strtoupper(trim($cols[0]));
+            $tahun = trim($cols[1]);
+            $link = trim($cols[2]);
+            if (empty($nama) || empty($tahun) || empty($link)) continue;
+
+            if (!isset($certMap[$nama])) {
+                $certMap[$nama] = [
+                    'name' => $nama,
+                    'certs' => []
+                ];
+            }
+            if (!isset($certMap[$nama]['certs'])) {
+                $certMap[$nama]['certs'] = [];
+            }
+            $certMap[$nama]['certs'][$tahun] = $link;
+        }
+
+        $jsonOut = json_encode($certMap, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        file_put_contents($cacheFile, $jsonOut);
+        echo $jsonOut;
+        exit;
+    }
+
+    if (file_exists($cacheFile)) {
+        echo file_get_contents($cacheFile);
+        exit;
+    }
+
+    $baseJsonFile = __DIR__ . '/cert_links.json';
+    if (file_exists($baseJsonFile)) {
+        echo file_get_contents($baseJsonFile);
+        exit;
+    }
+
+    echo '{}';
+    exit;
+}
+
 // ── Mode 2: Fetch sheet detail donatur berdasarkan GID ────────
 if (isset($_GET['sheet'])) {
     $gid = preg_replace('/[^0-9]/', '', $_GET['sheet']); // sanitize: hanya angka
