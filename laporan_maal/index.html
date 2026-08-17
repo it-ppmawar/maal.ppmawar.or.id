@@ -2120,13 +2120,18 @@ function getCertInfo(name) {
         if (cleanName === cleanK) return CERT_DATA[k];
     }
     
-    // 3. Safe prefix match: only when CERT KEY starts with NAME (cert is more specific than name).
-    //    Deliberately NOT the reverse — prevents e.g. "WAKAF IKAPETE LUMAJANG" (name)
-    //    from falsely matching "WAKAF IKAPETE" (key for a different branch).
+    // 3. Match when CERT KEY starts with NAME
     for (var i = 0; i < keys.length; i++) {
         var k = keys[i];
         var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
         if (cleanK.indexOf(cleanName + ' ') === 0) return CERT_DATA[k];
+    }
+    
+    // 4. Match when NAME starts with CERT KEY
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+        if (cleanName.indexOf(cleanK + ' ') === 0) return CERT_DATA[k];
     }
     
     return null;
@@ -3039,7 +3044,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ── Load Certificate Mapping (Baseline + Live Sync) ─────────
-    fetch('cert_links.json')
+    fetch('cert_links.json?t=' + Date.now())
         .then(function(r) { return r.json(); })
         .then(function(data) {
             CERT_DATA = data;
@@ -3053,7 +3058,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .finally(function() {
             // Live fetch from proxy or directly from published Google Sheets CSV
-            var certProxyUrl = (PROXY_URL.indexOf('?') !== -1 ? PROXY_URL + '&action=certs' : PROXY_URL + '?action=certs') + '&t=' + Date.now();
+            var certProxyUrl = (CSV_URL.indexOf('?') !== -1 ? CSV_URL + '&action=certs' : CSV_URL + '?action=certs') + '&t=' + Date.now();
             fetch(certProxyUrl)
                 .then(function(r) { return r.json(); })
                 .then(function(liveData) {
