@@ -697,7 +697,8 @@
             border: 1px solid var(--border);
             box-shadow: 0 6px 24px rgba(26,45,79,.06);
             padding: 10px;
-            margin-top: 24px;
+            margin-top: 0;
+            margin-bottom: 24px;
             animation: slideUp .35s ease;
             position: relative;
             overflow: hidden;
@@ -964,7 +965,8 @@
         }
         @media (max-width: 600px) {
             .cert-card {
-                margin-top: 14px;
+                margin-top: 0;
+                margin-bottom: 16px;
                 border-radius: 12px;
             }
             .cert-card-inner {
@@ -1037,7 +1039,8 @@
         }
         /* ── Certificate Card ─────────────────────────────────── */
         .cert-card {
-            margin-top: 18px;
+            margin-top: 0;
+            margin-bottom: 24px;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 24px rgba(15,30,60,0.10), 0 0 0 1.5px rgba(180,150,80,0.18);
@@ -2101,6 +2104,34 @@ function selectLembaga(name) {
     showLembaga(name);
 }
 
+// ── Certificate Helper ───────────────────────────────────────
+function getCertInfo(name) {
+    if (!name || !CERT_DATA) return null;
+    // 1. Exact key match
+    if (CERT_DATA[name]) return CERT_DATA[name];
+    
+    var cleanName = name.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+    var keys = Object.keys(CERT_DATA);
+    
+    // 2. Clean-exact match (tolerate punctuation differences)
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+        if (cleanName === cleanK) return CERT_DATA[k];
+    }
+    
+    // 3. Safe prefix match: only when CERT KEY starts with NAME (cert is more specific than name).
+    //    Deliberately NOT the reverse — prevents e.g. "WAKAF IKAPETE LUMAJANG" (name)
+    //    from falsely matching "WAKAF IKAPETE" (key for a different branch).
+    for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+        if (cleanK.indexOf(cleanName + ' ') === 0) return CERT_DATA[k];
+    }
+    
+    return null;
+}
+
 // ── Render Lembaga ────────────────────────────────────────────
 function showLembaga(name) {
     var data = ALL_DATA[name];
@@ -2127,8 +2158,60 @@ function showLembaga(name) {
     // ── Build kumulatif per tanggal untuk chart ──────────────
     var chartData = buildChartData(trx);
 
-    // ── Render HTML ──────────────────────────────────────────
-    var html = '<div class="lembaga-card">';
+    // ── Render Certificate Card Terpisah di Bagian Atas ──────
+    var certHtml = '';
+    var certInfo = getCertInfo(name);
+    if (certInfo && certInfo.certs && Object.keys(certInfo.certs).length > 0) {
+        var certYears = Object.keys(certInfo.certs).map(Number);
+        var latestYear = Math.max.apply(null, certYears);
+        var certUrl = certInfo.certs[latestYear];
+        var fileIdMatch = certUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || certUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        var fileId = fileIdMatch ? fileIdMatch[1] : null;
+
+        if (fileId) {
+            var thumbUrl = 'https://drive.google.com/thumbnail?sz=w600&id=' + fileId;
+            var displayName = capitalize(name);
+            var safeFileId = fileId.replace(/'/g, "\\'");
+            var safeTitle = ('Sertifikat ' + displayName + ' (Terbaru)').replace(/'/g, "\\'");
+
+            certHtml = '<div class="cert-card">' +
+                '<div class="cert-card-inner">' +
+                    '<div class="cert-watermark"><i class="bx bx-award"></i></div>' +
+                    '<div class="cert-tag"><i class="bx bxs-award"></i> Sertifikat Resmi</div>' +
+                    '<div class="cert-preview-box" onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')">' +
+                        '<img src="' + thumbUrl + '" alt="Sertifikat Wakaf ' + displayName + '" onerror="this.parentElement.classList.add(\'no-image\')">' +
+                        '<div class="cert-fallback-template">' +
+                            '<i class="bx bx-award" style="font-size:2.5rem;"></i>' +
+                            '<span style="font-family:\'Playfair Display\',serif;font-weight:700;font-size:0.9rem;">SERTIFIKAT WAKAF UANG</span>' +
+                            '<span style="font-size:0.75rem;color:var(--navy3);max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + displayName + '</span>' +
+                            '<span style="font-size:0.7rem;color:var(--muted);">Terbaru (' + latestYear + ')</span>' +
+                        '</div>' +
+                        '<div class="cert-overlay"><div class="cert-overlay-inner"><i class="bx bx-zoom-in"></i></div></div>' +
+                    '</div>' +
+                    '<div class="cert-title">Sertifikat Wakaf Terakhir</div>' +
+                    (function() {
+                        // Hitung perolehan bulan terkini (delta dari tahunan terakhir ke total saat ini)
+                        var latestMonthNominal = total;
+                        if (data.yearly && data.yearly.length > 0) {
+                            var lastYearNominal = data.yearly[data.yearly.length - 1].nominal;
+                            if (total > lastYearNominal) {
+                                latestMonthNominal = total - lastYearNominal;
+                            }
+                        }
+                        var bulanLabel = data.bulan ? ' (' + data.bulan + ')' : '';
+                        return '<div class="cert-desc">Sertifikat atas nama <em>' + displayName + '</em> (Terbaru). Perolehan tahun berjalan hingga bulan terkini' + bulanLabel + ': <strong>' + formatRpFull(latestMonthNominal) + '</strong>. Akumulasi terakhir: <strong>' + formatRpFull(total) + '</strong>.</div>';
+                    })() +
+                    '<div class="cert-actions">' +
+                        '<button onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')" class="btn-cert-primary"><i class="bx bx-fullscreen"></i> Perbesar Pratinjau</button>' +
+                        '<a href="' + certUrl + '" target="_blank" class="btn-cert-secondary"><i class="bx bx-link-external"></i> Buka di Drive</a>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }
+    }
+
+    // ── Render HTML Lembaga Card ─────────────────────────────
+    var html = certHtml + '<div class="lembaga-card">';
 
     // Header
     html += '<div class="card-header-lembaga">' +
@@ -2163,84 +2246,6 @@ function showLembaga(name) {
             '</div>';
         }
         html += '</div>';
-    }
-
-function getCertInfo(name) {
-    if (!name || !CERT_DATA) return null;
-    // 1. Exact key match
-    if (CERT_DATA[name]) return CERT_DATA[name];
-    
-    var cleanName = name.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
-    var keys = Object.keys(CERT_DATA);
-    
-    // 2. Clean-exact match (tolerate punctuation differences)
-    for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
-        if (cleanName === cleanK) return CERT_DATA[k];
-    }
-    
-    // 3. Safe prefix match: only when CERT KEY starts with NAME (cert is more specific than name).
-    //    Deliberately NOT the reverse — prevents e.g. "WAKAF IKAPETE LUMAJANG" (name)
-    //    from falsely matching "WAKAF IKAPETE" (key for a different branch).
-    for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        var cleanK = k.replace(/[\.\,\-]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
-        if (cleanK.indexOf(cleanName + ' ') === 0) return CERT_DATA[k];
-    }
-    
-    return null;
-}
-
-    // ── Render Certificate Card ─────────────────────────────────
-    var certInfo = getCertInfo(name);
-    if (certInfo && certInfo.certs && Object.keys(certInfo.certs).length > 0) {
-        var certYears = Object.keys(certInfo.certs).map(Number);
-        var latestYear = Math.max.apply(null, certYears);
-        var certUrl = certInfo.certs[latestYear];
-        var fileIdMatch = certUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || certUrl.match(/id=([a-zA-Z0-9_-]+)/);
-        var fileId = fileIdMatch ? fileIdMatch[1] : null;
-
-        if (fileId) {
-            var thumbUrl = 'https://drive.google.com/thumbnail?sz=w600&id=' + fileId;
-            var displayName = capitalize(name);
-            var safeFileId = fileId.replace(/'/g, "\\'");
-            var safeTitle = ('Sertifikat ' + displayName + ' (Terbaru)').replace(/'/g, "\\'");
-
-            html += '<div class="cert-card">' +
-                '<div class="cert-card-inner">' +
-                    '<div class="cert-watermark"><i class="bx bx-award"></i></div>' +
-                    '<div class="cert-tag"><i class="bx bxs-award"></i> Sertifikat Resmi</div>' +
-                    '<div class="cert-preview-box" onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')">' +
-                        '<img src="' + thumbUrl + '" alt="Sertifikat Wakaf ' + displayName + '" onerror="this.parentElement.classList.add(\'no-image\')">' +
-                        '<div class="cert-fallback-template">' +
-                            '<i class="bx bx-award" style="font-size:2.5rem;"></i>' +
-                            '<span style="font-family:\'Playfair Display\',serif;font-weight:700;font-size:0.9rem;">SERTIFIKAT WAKAF UANG</span>' +
-                            '<span style="font-size:0.75rem;color:var(--navy3);max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + displayName + '</span>' +
-                            '<span style="font-size:0.7rem;color:var(--muted);">Terbaru (' + latestYear + ')</span>' +
-                        '</div>' +
-                        '<div class="cert-overlay"><div class="cert-overlay-inner"><i class="bx bx-zoom-in"></i></div></div>' +
-                    '</div>' +
-                    '<div class="cert-title">Sertifikat Wakaf Terakhir</div>' +
-                    (function() {
-                        // Hitung perolehan bulan terkini (delta dari tahunan terakhir ke total saat ini)
-                        var latestMonthNominal = total;
-                        if (data.yearly && data.yearly.length > 0) {
-                            var lastYearNominal = data.yearly[data.yearly.length - 1].nominal;
-                            if (total > lastYearNominal) {
-                                latestMonthNominal = total - lastYearNominal;
-                            }
-                        }
-                        var bulanLabel = data.bulan ? ' (' + data.bulan + ')' : '';
-                        return '<div class="cert-desc">Sertifikat atas nama <em>' + displayName + '</em> (Terbaru). Perolehan tahun berjalan hingga bulan terkini' + bulanLabel + ': <strong>' + formatRpFull(latestMonthNominal) + '</strong>. Akumulasi terakhir: <strong>' + formatRpFull(total) + '</strong>.</div>';
-                    })() +
-                    '<div class="cert-actions">' +
-                        '<button onclick="openCertModal(\'' + safeFileId + '\', \'' + safeTitle + '\')" class="btn-cert-primary"><i class="bx bx-fullscreen"></i> Perbesar Pratinjau</button>' +
-                        '<a href="' + certUrl + '" target="_blank" class="btn-cert-secondary"><i class="bx bx-link-external"></i> Buka di Drive</a>' +
-                    '</div>' +
-                '</div>' +
-            '</div>';
-        }
     }
 
     // Chart (hanya jika ada data)
