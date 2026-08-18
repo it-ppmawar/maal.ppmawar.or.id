@@ -1859,5 +1859,11 @@
         },
         "va_bsi": "002001013532",
         "va_lain": "9002677002001013532"
+    },
+    "WAKAF IKAPETE MALANG": {
+        "name": "WAKAF IKAPETE MALANG",
+        "certs": {
+            "2026": "https://drive.google.com/file/d/1PJ704y6eA-iCwV4mka-00D-mpEn5bv/view?usp=drive_link"
+        }
     }
 }
