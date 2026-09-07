@@ -2198,12 +2198,19 @@ function showLembaga(name) {
                     '</div>' +
                     '<div class="cert-title">Sertifikat Wakaf Terakhir</div>' +
                     (function() {
-                        // Hitung perolehan bulan terkini (delta dari tahunan terakhir ke total saat ini)
+                        // Hitung perolehan tahun berjalan (delta dari akumulasi tahun sebelumnya ke total saat ini)
                         var latestMonthNominal = total;
+                        var nowYear = new Date().getFullYear();
+                        var prevYearNominal = 0;
                         if (data.yearly && data.yearly.length > 0) {
-                            var lastYearNominal = data.yearly[data.yearly.length - 1].nominal;
-                            if (total > lastYearNominal) {
-                                latestMonthNominal = total - lastYearNominal;
+                            for (var yi = data.yearly.length - 1; yi >= 0; yi--) {
+                                if (data.yearly[yi].year < nowYear) {
+                                    prevYearNominal = data.yearly[yi].nominal;
+                                    break;
+                                }
+                            }
+                            if (prevYearNominal > 0 && total >= prevYearNominal) {
+                                latestMonthNominal = total - prevYearNominal;
                             }
                         }
                         var bulanLabel = data.bulan ? ' (' + data.bulan + ')' : '';
