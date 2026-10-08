@@ -22,8 +22,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           # Upload all files from root
           local-dir: ./
-          # Path target BENAR untuk web utama (konfirmasi dari PHP error log)
-          server-dir: public_html/maal/
+          # Path target: gunakan secret agar fleksibel
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
           exclude: |
             **/.git*
