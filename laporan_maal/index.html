@@ -448,6 +448,120 @@
             color: var(--navy3);
             white-space: nowrap;
         }
+        .tgl-badge-clickable {
+            cursor: pointer;
+            background: #e6f3f0;
+            color: var(--teal2);
+            border: 1px solid rgba(42, 157, 143, 0.35);
+            transition: all .2s ease;
+            user-select: none;
+        }
+        .tgl-badge-clickable:hover {
+            background: var(--teal);
+            color: #fff;
+            border-color: var(--teal);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(42, 157, 143, 0.25);
+        }
+        .tgl-badge-clickable.active-row {
+            background: var(--navy);
+            color: #fff;
+            border-color: var(--navy);
+            box-shadow: 0 2px 6px rgba(26, 45, 79, 0.25);
+        }
+
+        /* ── Detail Perkembangan Bulanan Styles ── */
+        .monthly-section {
+            padding: 0 0 4px;
+            animation: fadeIn .3s ease;
+        }
+        .monthly-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 0 24px;
+        }
+        .monthly-header-bar .section-title {
+            padding: 16px 0 0;
+        }
+        .monthly-stat-badge {
+            padding-top: 14px;
+        }
+        .badge-year-total {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eef8f6;
+            color: var(--teal2);
+            border: 1px solid rgba(42, 157, 143, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: .76rem;
+            font-weight: 500;
+        }
+        .badge-year-total strong {
+            font-weight: 700;
+            color: var(--navy);
+        }
+        .year-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 14px 24px 12px;
+            justify-content: center;
+        }
+        .btn-year {
+            padding: 6px 16px;
+            border: 1.5px solid var(--navy);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--navy);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-year:hover {
+            background: var(--light);
+            border-color: var(--navy3);
+        }
+        .btn-year.active {
+            background: var(--navy);
+            color: #fff;
+            border-color: var(--navy);
+            box-shadow: 0 2px 8px rgba(26, 45, 79, 0.25);
+        }
+        .monthly-chart-wrap {
+            height: 270px;
+            padding: 8px 20px 10px;
+            position: relative;
+        }
+        .monthly-chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .monthly-empty-notice {
+            text-align: center;
+            font-size: .83rem;
+            color: var(--muted);
+            padding: 16px 24px;
+            background: #fafbfc;
+            border-radius: 8px;
+            margin: 12px 24px 0;
+            border: 1px dashed var(--border);
+        }
+        .monthly-loading-notice {
+            text-align: center;
+            font-size: .83rem;
+            color: var(--muted);
+            padding: 20px 24px;
+        }
         .tfoot-row td {
             background: #eef2f9;
             font-weight: 700;
@@ -1325,6 +1439,19 @@ var currentPage  = 1;
 var currentData  = null; // currently displayed lembaga data
 var currentName  = '';
 
+// ── Monthly Config & State ──────────────────────────────────
+var CSV_MONTHLY_GIDS = {
+    '2023': '0',
+    '2024': '639020996',
+    '2025': '103473954',
+    '2026': '162336325'
+};
+var CSV_MONTHLY_BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXCXyDsiDIWVKVEHSd5dzljx7PVvddCFONA_WOFi9eVYNHuG-_StdExptnzDHsIbFfcAujkgAfUklY/pub?output=csv&gid=';
+var MONTHLY_STORE = {}; // { [year]: [ { no, name, cleanName, tokens, data } ] }
+var monthlyDataLoaded = false;
+var currentMonthlyYear = null;
+var currentMonthlyChart = null;
+
 // ── Sheet GID Map: nomor baris CSV2 → gid sheet detail donatur ─
 var CSV2_ROW_TO_GID = {
     10:'815882114', 11:'692127026', 17:'1033221722', 18:'2041381285',
@@ -1733,6 +1860,9 @@ function syncData() {
 
     // Refresh dynamic GIDs too
     loadDynamicGids(true);
+
+    // Refresh data bulanan
+    fetchAllMonthlyData(true);
 
     // Jaminan tombol selalu kembali aktif, apapun yang terjadi
     var done = function() {
@@ -2154,6 +2284,7 @@ function showLembaga(name) {
     document.getElementById('result-area').style.display = 'block';
 
     if (currentChart) { currentChart.destroy(); currentChart = null; }
+    if (currentMonthlyChart) { currentMonthlyChart.destroy(); currentMonthlyChart = null; }
 
     var trx = data.transaksi;
     var total = data.total;
@@ -2263,12 +2394,24 @@ function showLembaga(name) {
         html += '</div>';
     }
 
-    // Chart (hanya jika ada data)
+    // Chart Kumulatif (hanya jika ada data)
     if (chartData.labels.length > 1) {
         html += '<div class="section-title"><i class="bx bx-line-chart"></i>Perkembangan Kumulatif Wakaf</div>';
         html += '<div class="chart-wrap"><canvas id="lembaga-chart"></canvas></div>';
         html += '<hr class="divider">';
     }
+
+    // ── Detail Perkembangan Bulanan (Grafik Bulanan) ──────────
+    html += '<div id="monthly-section" class="monthly-section">' +
+        '<div class="monthly-header-bar">' +
+            '<div class="section-title" style="padding-top:14px;"><i class="bx bx-bar-chart-alt-2"></i>Detail Perkembangan Bulanan</div>' +
+            '<div id="monthly-stat-badge" class="monthly-stat-badge"></div>' +
+        '</div>' +
+        '<div id="monthly-controls" class="year-buttons"></div>' +
+        '<div class="monthly-chart-wrap" id="monthly-canvas-wrap"><canvas id="monthly-chart"></canvas></div>' +
+        '<div id="monthly-notice" class="monthly-empty-notice" style="display:none;"></div>' +
+        '<hr class="divider" style="margin-top:20px;">' +
+    '</div>';
 
     // Table header
     html += '<div class="table-section">';
@@ -2291,10 +2434,13 @@ function showLembaga(name) {
 
     document.getElementById('result-area').innerHTML = html;
 
-    // Render chart
+    // Render chart kumulatif
     if (chartData.labels.length > 1) {
         renderChart(chartData);
     }
+
+    // Render grafik bulanan
+    renderMonthlySection(name, data._no);
 
     // Render tabel
     renderTable();
@@ -2411,6 +2557,321 @@ function renderChart(chartData) {
     });
 }
 
+// ── Monthly Chart & Helpers ───────────────────────────────────
+function cleanLembagaStr(s) {
+    return (s || '')
+        .toUpperCase()
+        .replace(/^WAKAF\s+/, '')
+        .replace(/\b(LAMONGAN|MALANG|JOMBANG|TUBAN|MOJOKERTO|BANYUWANGI|NGANJUK|BOJONEGORO|GRESIK|SURABAYA)\b/g, '')
+        .replace(/[^A-Z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function fetchAllMonthlyData(forceFresh) {
+    var tParam = forceFresh ? '&t=' + Date.now() : '';
+    var years = Object.keys(CSV_MONTHLY_GIDS);
+
+    var promises = years.map(function(year) {
+        var proxyUrl = 'csv_proxy.php?action=monthly&year=' + year + tParam;
+        var directUrl = CSV_MONTHLY_BASE_URL + CSV_MONTHLY_GIDS[year] + (forceFresh ? '&t=' + Date.now() : '');
+
+        return fetch(proxyUrl)
+            .then(function(res) {
+                if (!res.ok) throw new Error('Proxy HTTP ' + res.status);
+                return res.text();
+            })
+            .then(function(text) {
+                if (!text || text.trim().startsWith('<') || text.trim().startsWith('# ERROR')) {
+                    throw new Error('Proxy returned non-csv');
+                }
+                parseMonthlyCSV(text, year);
+            })
+            .catch(function(err) {
+                console.warn('[Monthly] Proxy gagal tahun ' + year + ', coba direct Google Sheets:', err.message);
+                return fetch(directUrl)
+                    .then(function(res) { return res.text(); })
+                    .then(function(text) { parseMonthlyCSV(text, year); });
+            })
+            .catch(function(err2) {
+                console.error('[Monthly] Gagal memuat data tahun ' + year + ':', err2);
+            });
+    });
+
+    return Promise.all(promises).then(function() {
+        monthlyDataLoaded = true;
+        console.log('[Monthly] Berhasil memuat data bulanan.');
+        if (currentName && ALL_DATA && ALL_DATA[currentName]) {
+            renderMonthlySection(currentName, ALL_DATA[currentName]._no);
+            renderTable();
+        }
+    });
+}
+
+function parseMonthlyCSV(csvText, year) {
+    if (!csvText) return;
+    var lines = csvText.split('\n');
+    var headerRowIdx = -1;
+    for (var i = 0; i < lines.length; i++) {
+        if (lines[i].includes('NO') && lines[i].includes('NAMA LEMBAGA')) {
+            headerRowIdx = i;
+            break;
+        }
+    }
+    if (headerRowIdx === -1) return;
+
+    var csvSliced = lines.slice(headerRowIdx).join('\n');
+    var parsed = Papa.parse(csvSliced, { header: true, skipEmptyLines: true });
+    var months = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGT','SEP','OKT','NOV','DES'];
+    var rows = [];
+
+    parsed.data.forEach(function(row) {
+        var rawName = String(row['NAMA LEMBAGA'] || '').trim().toUpperCase();
+        if (!rawName || rawName === 'JUMLAH' || rawName.includes('TOTAL')) return;
+
+        var no = parseInt(String(row['NO'] || '').replace(/[^\d]/g, ''), 10) || 0;
+        var mData = {};
+        var hasData = false;
+
+        months.forEach(function(m) {
+            var valStr = String(row[m] || '').replace(/[^\d]/g, '');
+            var val = parseInt(valStr, 10) || 0;
+            mData[m] = val;
+            if (val > 0) hasData = true;
+        });
+
+        if (hasData) {
+            var cName = cleanLembagaStr(rawName);
+            rows.push({
+                no: no,
+                name: rawName,
+                cleanName: cName,
+                tokens: new Set(cName.split(' ').filter(Boolean)),
+                data: mData
+            });
+        }
+    });
+
+    MONTHLY_STORE[year] = rows;
+}
+
+function getMonthlyDataForLembaga(lemName, lemNo) {
+    if (!lemName) return {};
+    var cleanL = cleanLembagaStr(lemName);
+    var tokensL = new Set(cleanL.split(' ').filter(Boolean));
+    var resultByYear = {};
+
+    Object.keys(MONTHLY_STORE).forEach(function(y) {
+        var rows = MONTHLY_STORE[y] || [];
+        // 1. Exact clean match
+        var found = rows.find(function(r) { return r.cleanName === cleanL; });
+        if (!found) {
+            // 2. Prefix / substring match
+            found = rows.find(function(r) {
+                return cleanL.startsWith(r.cleanName) || r.cleanName.startsWith(cleanL);
+            });
+        }
+        if (!found) {
+            // 3. Token set match
+            var best = null;
+            var maxScore = 0;
+            rows.forEach(function(r) {
+                var inter = 0;
+                r.tokens.forEach(function(t) { if (tokensL.has(t)) inter++; });
+                var minT = Math.min(r.tokens.size, tokensL.size);
+                if (inter === minT && minT >= 2) {
+                    var score = inter / (r.tokens.size + tokensL.size - inter);
+                    if (score > maxScore) {
+                        maxScore = score;
+                        best = r;
+                    }
+                }
+            });
+            if (best && maxScore >= 0.5) found = best;
+        }
+        if (!found && lemNo > 0) {
+            // 4. Fallback match by row.no
+            found = rows.find(function(r) { return r.no === lemNo; });
+        }
+        if (found && found.data) {
+            resultByYear[y] = found.data;
+        }
+    });
+
+    return resultByYear;
+}
+
+function isYearMonthlyAvailable(year) {
+    if (!currentName || !ALL_DATA[currentName]) return false;
+    var mData = getMonthlyDataForLembaga(currentName, ALL_DATA[currentName]._no);
+    return Boolean(mData[String(year)]);
+}
+
+function renderMonthlySection(name, no) {
+    var section = document.getElementById('monthly-section');
+    if (!section) return;
+
+    var controls = document.getElementById('monthly-controls');
+    var canvasWrap = document.getElementById('monthly-canvas-wrap');
+    var notice = document.getElementById('monthly-notice');
+    var statBadge = document.getElementById('monthly-stat-badge');
+
+    if (!monthlyDataLoaded) {
+        if (notice) {
+            notice.style.display = 'block';
+            notice.className = 'monthly-loading-notice';
+            notice.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Memuat detail perkembangan bulanan...';
+        }
+        if (canvasWrap) canvasWrap.style.display = 'none';
+        if (controls) controls.innerHTML = '';
+        if (statBadge) statBadge.innerHTML = '';
+        return;
+    }
+
+    var monthlyData = getMonthlyDataForLembaga(name, no);
+    var availableYears = Object.keys(monthlyData).sort();
+
+    if (availableYears.length === 0) {
+        if (notice) {
+            notice.style.display = 'block';
+            notice.className = 'monthly-empty-notice';
+            notice.innerHTML = '<i class="bx bx-info-circle"></i> Data rincian perkembangan bulanan belum tersedia untuk lembaga ini.';
+        }
+        if (canvasWrap) canvasWrap.style.display = 'none';
+        if (controls) controls.innerHTML = '';
+        if (statBadge) statBadge.innerHTML = '';
+        if (currentMonthlyChart) {
+            currentMonthlyChart.destroy();
+            currentMonthlyChart = null;
+        }
+        return;
+    }
+
+    if (notice) notice.style.display = 'none';
+    if (canvasWrap) canvasWrap.style.display = 'block';
+
+    var btnHtml = '';
+    availableYears.forEach(function(y) {
+        btnHtml += '<button type="button" class="btn-year" data-year="' + y + '" onclick="showMonthlyChart(\'' + y + '\')">' + y + '</button>';
+    });
+    if (controls) controls.innerHTML = btnHtml;
+
+    var targetYear = (currentMonthlyYear && availableYears.includes(currentMonthlyYear))
+        ? currentMonthlyYear
+        : availableYears[availableYears.length - 1]; // tahun terbaru
+
+    showMonthlyChart(targetYear);
+}
+
+function showMonthlyChart(year) {
+    if (!currentName || !ALL_DATA[currentName]) return;
+    currentMonthlyYear = String(year);
+
+    // Update active button
+    var btns = document.querySelectorAll('#monthly-controls .btn-year');
+    btns.forEach(function(b) {
+        if (b.dataset.year === currentMonthlyYear) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+
+    // Update active highlight di tabel perkembangan tahunan
+    var badges = document.querySelectorAll('.tgl-badge-clickable');
+    badges.forEach(function(b) {
+        if (b.textContent.trim().startsWith(currentMonthlyYear)) {
+            b.classList.add('active-row');
+        } else {
+            b.classList.remove('active-row');
+        }
+    });
+
+    var monthlyData = getMonthlyDataForLembaga(currentName, ALL_DATA[currentName]._no);
+    var data = monthlyData[currentMonthlyYear] || {};
+    var months = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGT','SEP','OKT','NOV','DES'];
+    var values = months.map(function(m) { return data[m] || 0; });
+    var yearTotal = values.reduce(function(a, b) { return a + b; }, 0);
+
+    var statBadge = document.getElementById('monthly-stat-badge');
+    if (statBadge) {
+        statBadge.innerHTML = '<span class="badge-year-total"><i class="bx bx-calendar-star"></i> Total ' + currentMonthlyYear + ': <strong>' + formatRpFull(yearTotal) + '</strong></span>';
+    }
+
+    var canvas = document.getElementById('monthly-chart');
+    if (!canvas) return;
+
+    if (currentMonthlyChart) {
+        currentMonthlyChart.destroy();
+        currentMonthlyChart = null;
+    }
+
+    var ctx = canvas.getContext('2d');
+    currentMonthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Wakaf ' + currentMonthlyYear,
+                data: values,
+                backgroundColor: 'rgba(42, 157, 143, 0.15)',
+                borderColor: '#2a9d8f',
+                borderWidth: 2.5,
+                pointBackgroundColor: '#e9c46a',
+                pointBorderColor: '#2a9d8f',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            return items[0].label + ' ' + currentMonthlyYear;
+                        },
+                        label: function(ctx) {
+                            return ' Perolehan: ' + formatRpFull(ctx.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 10, family: 'Poppins' },
+                        color: '#718096'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: {
+                        callback: function(v) { return formatRp(v); },
+                        maxTicksLimit: 6,
+                        font: { size: 10, family: 'Poppins' },
+                        color: '#718096'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function selectMonthlyFromTable(year) {
+    showMonthlyChart(year);
+    var el = document.getElementById('monthly-section');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
 // ── Render Table with Pagination ──────────────────────────────
 function renderTable() {
     var trx = currentData.transaksi;
@@ -2432,9 +2893,19 @@ function renderTable() {
         var html = '';
         slice.forEach(function(t, idx) {
             var displayYear = (t.tgl || '').split(/[-\/]/).pop() || t.tgl || '-';
+            var hasMonthly = isYearMonthlyAvailable(displayYear);
+            var yearBadgeHtml = '';
+            if (hasMonthly) {
+                var isActiveYear = (currentMonthlyYear === displayYear);
+                yearBadgeHtml = '<span class="tgl-badge tgl-badge-clickable' + (isActiveYear ? ' active-row' : '') + '" onclick="selectMonthlyFromTable(\'' + displayYear + '\')" title="Klik untuk melihat grafik rincian bulanan tahun ' + displayYear + '">' +
+                    displayYear + ' <i class="bx bx-line-chart" style="font-size:0.8rem;margin-left:3px;vertical-align:middle;"></i></span>';
+            } else {
+                yearBadgeHtml = '<span class="tgl-badge">' + displayYear + '</span>';
+            }
+
             html += '<tr>' +
                 '<td>' + (start + idx + 1) + '</td>' +
-                '<td><span class="tgl-badge">' + displayYear + '</span></td>' +
+                '<td>' + yearBadgeHtml + '</td>' +
                 '<td>' + (t.nama || '-') + '</td>' +
                 '<td>' + formatRpFull(t.cumulative || t.nominal) + '</td>' +
             '</tr>';
@@ -3095,6 +3566,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load GID mapping dynamically from proxy
     loadDynamicGids();
+
+    // Load monthly data in parallel
+    fetchAllMonthlyData();
 
     // Start fetching
     fetchCSV();

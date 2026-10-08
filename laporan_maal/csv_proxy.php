@@ -191,6 +191,56 @@ if (isset($_GET['action']) && $_GET['action'] === 'certs') {
     exit;
 }
 
+// ── Mode 5: API Endpoint untuk Data Bulanan (Monthly) ────────
+if (isset($_GET['action']) && $_GET['action'] === 'monthly') {
+    $year = isset($_GET['year']) ? preg_replace('/[^0-9]/', '', $_GET['year']) : '';
+    $monthlyGids = [
+        '2023' => '0',
+        '2024' => '639020996',
+        '2025' => '103473954',
+        '2026' => '162336325'
+    ];
+
+    if (!isset($monthlyGids[$year])) {
+        http_response_code(400);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo '# ERROR: Tahun tidak valid atau tidak didukung';
+        exit;
+    }
+
+    $gid = $monthlyGids[$year];
+    $sheetId = '2PACX-1vTXCXyDsiDIWVKVEHSd5dzljx7PVvddCFONA_WOFi9eVYNHuG-_StdExptnzDHsIbFfcAujkgAfUklY';
+    $url = "https://docs.google.com/spreadsheets/d/e/{$sheetId}/pub?output=csv&gid={$gid}";
+
+    $cacheFile = __DIR__ . '/csv_cache_monthly_' . $year . '.txt';
+    $cacheTTL  = 300; // 5 menit
+
+    $forceFresh = isset($_GET['t']);
+    if (!$forceFresh && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTTL) {
+        header('Content-Type: text/csv; charset=utf-8');
+        echo file_get_contents($cacheFile);
+        exit;
+    }
+
+    $data = fetchCsvData($url);
+    if ($data === false || empty(trim($data))) {
+        if (file_exists($cacheFile)) {
+            header('Content-Type: text/csv; charset=utf-8');
+            echo file_get_contents($cacheFile);
+            exit;
+        }
+        http_response_code(502);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo '# ERROR: Gagal mengambil data bulanan tahun ' . $year;
+        exit;
+    }
+
+    file_put_contents($cacheFile, $data);
+    header('Content-Type: text/csv; charset=utf-8');
+    echo $data;
+    exit;
+}
+
 // ── Mode 2: Fetch sheet detail donatur berdasarkan GID ────────
 if (isset($_GET['sheet'])) {
     $gid = preg_replace('/[^0-9]/', '', $_GET['sheet']); // sanitize: hanya angka
