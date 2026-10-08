@@ -23,7 +23,7 @@ jobs:
           # Upload semua file dari root repo
           local-dir: ./
           # Root FTP github@maal.ppmawar.or.id sudah = root website maal.ppmawar.or.id
-          server-dir: /
+          server-dir: ./
           # Abaikan file/folder yang tidak perlu di-deploy ke web utama
           exclude: |
             **/.git*
@@ -54,8 +54,8 @@ jobs:
           password: ${{ secrets.FTP_LAPORAN_PASSWORD }}
           # Hanya upload isi dari folder laporan_maal
           local-dir: ./laporan_maal/
-          # Root FTP github@laporan.maa.ppmawar.or.id sudah = root subdomain
-          server-dir: /
+          # Root FTP github@laporan.maal.ppmawar.or.id sudah = root subdomain
+          server-dir: ./
           # Force re-upload setiap push
           dangerous-clean-slate: true
           exclude: |
