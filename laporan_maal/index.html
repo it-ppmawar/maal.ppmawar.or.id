@@ -448,46 +448,87 @@
             color: var(--navy3);
             white-space: nowrap;
         }
-        .tgl-badge-clickable {
+        /* ── Tabel Interaktif & Detail Perkembangan Bulanan Inline ── */
+        .trx-row {
             cursor: pointer;
+            user-select: none;
+            transition: background .18s ease;
+        }
+        .trx-row:hover {
+            background: #f0f6fd !important;
+        }
+        .trx-row.open {
+            background: #eef6fc !important;
+            border-bottom-color: transparent !important;
+        }
+        .trx-row.open td {
+            font-weight: 600;
+        }
+        .tgl-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #eef2f9;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: .76rem;
+            color: var(--navy3);
+            white-space: nowrap;
+            transition: all .2s ease;
+        }
+        .tgl-badge.has-monthly {
             background: #e6f3f0;
             color: var(--teal2);
             border: 1px solid rgba(42, 157, 143, 0.35);
-            transition: all .2s ease;
-            user-select: none;
         }
-        .tgl-badge-clickable:hover {
+        .trx-row:hover .tgl-badge.has-monthly {
             background: var(--teal);
             color: #fff;
             border-color: var(--teal);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(42, 157, 143, 0.25);
         }
-        .tgl-badge-clickable.active-row {
+        .trx-row.open .tgl-badge.has-monthly {
             background: var(--navy);
             color: #fff;
             border-color: var(--navy);
             box-shadow: 0 2px 6px rgba(26, 45, 79, 0.25);
         }
-
-        /* ── Detail Perkembangan Bulanan Styles ── */
-        .monthly-section {
-            padding: 0 0 4px;
-            animation: fadeIn .3s ease;
+        .row-toggle-icon {
+            font-size: .95rem;
+            transition: transform .25s ease;
+            display: inline-block;
         }
-        .monthly-header-bar {
+        .trx-row.open .row-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .trx-detail-row {
+            background: #fbfcfe;
+        }
+        .inline-monthly-wrap {
+            padding: 16px 22px 20px;
+            background: linear-gradient(180deg, #f8fbfe 0%, #ffffff 100%);
+            border-top: 1px dashed var(--border);
+            border-bottom: 2px solid #dde4ef;
+        }
+        .inline-monthly-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
-            padding: 0 24px;
+            margin-bottom: 12px;
         }
-        .monthly-header-bar .section-title {
-            padding: 16px 0 0;
+        .inline-monthly-title {
+            font-size: .88rem;
+            font-weight: 700;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
-        .monthly-stat-badge {
-            padding-top: 14px;
+        .inline-monthly-title i {
+            color: var(--teal);
+            font-size: 1.15rem;
         }
         .badge-year-total {
             display: inline-flex;
@@ -496,71 +537,32 @@
             background: #eef8f6;
             color: var(--teal2);
             border: 1px solid rgba(42, 157, 143, 0.3);
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 20px;
-            font-size: .76rem;
+            font-size: .78rem;
             font-weight: 500;
         }
         .badge-year-total strong {
             font-weight: 700;
             color: var(--navy);
         }
-        .year-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 14px 24px 12px;
-            justify-content: center;
-        }
-        .btn-year {
-            padding: 6px 16px;
-            border: 1.5px solid var(--navy);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--navy);
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: 'Poppins', sans-serif;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-year:hover {
-            background: var(--light);
-            border-color: var(--navy3);
-        }
-        .btn-year.active {
-            background: var(--navy);
-            color: #fff;
-            border-color: var(--navy);
-            box-shadow: 0 2px 8px rgba(26, 45, 79, 0.25);
-        }
-        .monthly-chart-wrap {
-            height: 270px;
-            padding: 8px 20px 10px;
+        .inline-chart-container {
+            height: 250px;
             position: relative;
+            width: 100%;
         }
-        .monthly-chart-wrap canvas {
+        .inline-chart-container canvas {
             width: 100% !important;
             height: 100% !important;
         }
-        .monthly-empty-notice {
+        .inline-monthly-empty {
             text-align: center;
+            padding: 16px 12px;
             font-size: .83rem;
             color: var(--muted);
-            padding: 16px 24px;
             background: #fafbfc;
             border-radius: 8px;
-            margin: 12px 24px 0;
             border: 1px dashed var(--border);
-        }
-        .monthly-loading-notice {
-            text-align: center;
-            font-size: .83rem;
-            color: var(--muted);
-            padding: 20px 24px;
         }
         .tfoot-row td {
             background: #eef2f9;
@@ -1449,8 +1451,8 @@ var CSV_MONTHLY_GIDS = {
 var CSV_MONTHLY_BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTXCXyDsiDIWVKVEHSd5dzljx7PVvddCFONA_WOFi9eVYNHuG-_StdExptnzDHsIbFfcAujkgAfUklY/pub?output=csv&gid=';
 var MONTHLY_STORE = {}; // { [year]: [ { no, name, cleanName, tokens, data } ] }
 var monthlyDataLoaded = false;
-var currentMonthlyYear = null;
-var currentMonthlyChart = null;
+var inlineChartInstances = {}; // { [year]: ChartInstance }
+var openedYears = new Set();    // Set of opened year strings
 
 // ── Sheet GID Map: nomor baris CSV2 → gid sheet detail donatur ─
 var CSV2_ROW_TO_GID = {
@@ -2284,7 +2286,11 @@ function showLembaga(name) {
     document.getElementById('result-area').style.display = 'block';
 
     if (currentChart) { currentChart.destroy(); currentChart = null; }
-    if (currentMonthlyChart) { currentMonthlyChart.destroy(); currentMonthlyChart = null; }
+    Object.keys(inlineChartInstances).forEach(function(y) {
+        if (inlineChartInstances[y]) inlineChartInstances[y].destroy();
+    });
+    inlineChartInstances = {};
+    openedYears = new Set();
 
     var trx = data.transaksi;
     var total = data.total;
@@ -2296,6 +2302,13 @@ function showLembaga(name) {
 
     // ── Build kumulatif per tanggal untuk chart ──────────────
     var chartData = buildChartData(trx);
+
+    // Buka otomatis grafik bulanan untuk tahun terbaru yang memiliki data
+    var mDataInitial = getMonthlyDataForLembaga(name, data._no);
+    var availYearsInitial = Object.keys(mDataInitial).sort();
+    if (availYearsInitial.length > 0) {
+        openedYears.add(availYearsInitial[availYearsInitial.length - 1]);
+    }
 
     // ── Render Certificate Card Terpisah di Bagian Atas ──────
     var certHtml = '';
@@ -2401,18 +2414,6 @@ function showLembaga(name) {
         html += '<hr class="divider">';
     }
 
-    // ── Detail Perkembangan Bulanan (Grafik Bulanan) ──────────
-    html += '<div id="monthly-section" class="monthly-section">' +
-        '<div class="monthly-header-bar">' +
-            '<div class="section-title" style="padding-top:14px;"><i class="bx bx-bar-chart-alt-2"></i>Detail Perkembangan Bulanan</div>' +
-            '<div id="monthly-stat-badge" class="monthly-stat-badge"></div>' +
-        '</div>' +
-        '<div id="monthly-controls" class="year-buttons"></div>' +
-        '<div class="monthly-chart-wrap" id="monthly-canvas-wrap"><canvas id="monthly-chart"></canvas></div>' +
-        '<div id="monthly-notice" class="monthly-empty-notice" style="display:none;"></div>' +
-        '<hr class="divider" style="margin-top:20px;">' +
-    '</div>';
-
     // Table header
     html += '<div class="table-section">';
 
@@ -2439,10 +2440,7 @@ function showLembaga(name) {
         renderChart(chartData);
     }
 
-    // Render grafik bulanan
-    renderMonthlySection(name, data._no);
-
-    // Render tabel
+    // Render tabel (dan otomatis grafik bulanan inline)
     renderTable();
 
     // ── Muat detail donatur jika sheet tersedia ──────────────
@@ -2602,7 +2600,13 @@ function fetchAllMonthlyData(forceFresh) {
         monthlyDataLoaded = true;
         console.log('[Monthly] Berhasil memuat data bulanan.');
         if (currentName && ALL_DATA && ALL_DATA[currentName]) {
-            renderMonthlySection(currentName, ALL_DATA[currentName]._no);
+            if (openedYears.size === 0) {
+                var mDataInit = getMonthlyDataForLembaga(currentName, ALL_DATA[currentName]._no);
+                var availYearsInit = Object.keys(mDataInit).sort();
+                if (availYearsInit.length > 0) {
+                    openedYears.add(availYearsInit[availYearsInit.length - 1]);
+                }
+            }
             renderTable();
         }
     });
@@ -2707,112 +2711,75 @@ function isYearMonthlyAvailable(year) {
     return Boolean(mData[String(year)]);
 }
 
-function renderMonthlySection(name, no) {
-    var section = document.getElementById('monthly-section');
-    if (!section) return;
+function toggleYearMonthly(year) {
+    year = String(year);
+    var detailRow = document.getElementById('detail-row-' + year);
+    var masterRow = document.getElementById('trx-row-' + year);
+    if (!detailRow || !masterRow) return;
 
-    var controls = document.getElementById('monthly-controls');
-    var canvasWrap = document.getElementById('monthly-canvas-wrap');
-    var notice = document.getElementById('monthly-notice');
-    var statBadge = document.getElementById('monthly-stat-badge');
-
-    if (!monthlyDataLoaded) {
-        if (notice) {
-            notice.style.display = 'block';
-            notice.className = 'monthly-loading-notice';
-            notice.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Memuat detail perkembangan bulanan...';
+    var isOpen = (detailRow.style.display !== 'none');
+    if (isOpen) {
+        detailRow.style.display = 'none';
+        masterRow.classList.remove('open');
+        openedYears.delete(year);
+        if (inlineChartInstances[year]) {
+            inlineChartInstances[year].destroy();
+            delete inlineChartInstances[year];
         }
-        if (canvasWrap) canvasWrap.style.display = 'none';
-        if (controls) controls.innerHTML = '';
-        if (statBadge) statBadge.innerHTML = '';
-        return;
+    } else {
+        detailRow.style.display = 'table-row';
+        masterRow.classList.add('open');
+        openedYears.add(year);
+        renderInlineMonthlyChart(year);
     }
-
-    var monthlyData = getMonthlyDataForLembaga(name, no);
-    var availableYears = Object.keys(monthlyData).sort();
-
-    if (availableYears.length === 0) {
-        if (notice) {
-            notice.style.display = 'block';
-            notice.className = 'monthly-empty-notice';
-            notice.innerHTML = '<i class="bx bx-info-circle"></i> Data rincian perkembangan bulanan belum tersedia untuk lembaga ini.';
-        }
-        if (canvasWrap) canvasWrap.style.display = 'none';
-        if (controls) controls.innerHTML = '';
-        if (statBadge) statBadge.innerHTML = '';
-        if (currentMonthlyChart) {
-            currentMonthlyChart.destroy();
-            currentMonthlyChart = null;
-        }
-        return;
-    }
-
-    if (notice) notice.style.display = 'none';
-    if (canvasWrap) canvasWrap.style.display = 'block';
-
-    var btnHtml = '';
-    availableYears.forEach(function(y) {
-        btnHtml += '<button type="button" class="btn-year" data-year="' + y + '" onclick="showMonthlyChart(\'' + y + '\')">' + y + '</button>';
-    });
-    if (controls) controls.innerHTML = btnHtml;
-
-    var targetYear = (currentMonthlyYear && availableYears.includes(currentMonthlyYear))
-        ? currentMonthlyYear
-        : availableYears[availableYears.length - 1]; // tahun terbaru
-
-    showMonthlyChart(targetYear);
 }
 
-function showMonthlyChart(year) {
-    if (!currentName || !ALL_DATA[currentName]) return;
-    currentMonthlyYear = String(year);
+function renderInlineMonthlyChart(year) {
+    var wrap = document.getElementById('inline-monthly-' + year);
+    if (!wrap) return;
 
-    // Update active button
-    var btns = document.querySelectorAll('#monthly-controls .btn-year');
-    btns.forEach(function(b) {
-        if (b.dataset.year === currentMonthlyYear) {
-            b.classList.add('active');
-        } else {
-            b.classList.remove('active');
-        }
-    });
-
-    // Update active highlight di tabel perkembangan tahunan
-    var badges = document.querySelectorAll('.tgl-badge-clickable');
-    badges.forEach(function(b) {
-        if (b.textContent.trim().startsWith(currentMonthlyYear)) {
-            b.classList.add('active-row');
-        } else {
-            b.classList.remove('active-row');
-        }
-    });
-
-    var monthlyData = getMonthlyDataForLembaga(currentName, ALL_DATA[currentName]._no);
-    var data = monthlyData[currentMonthlyYear] || {};
-    var months = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGT','SEP','OKT','NOV','DES'];
-    var values = months.map(function(m) { return data[m] || 0; });
-    var yearTotal = values.reduce(function(a, b) { return a + b; }, 0);
-
-    var statBadge = document.getElementById('monthly-stat-badge');
-    if (statBadge) {
-        statBadge.innerHTML = '<span class="badge-year-total"><i class="bx bx-calendar-star"></i> Total ' + currentMonthlyYear + ': <strong>' + formatRpFull(yearTotal) + '</strong></span>';
+    if (!monthlyDataLoaded) {
+        wrap.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:0.83rem;">' +
+            '<i class="bx bx-loader-alt bx-spin"></i> Memuat detail perkembangan bulanan...</div>';
+        return;
     }
 
-    var canvas = document.getElementById('monthly-chart');
+    var mDataByYear = getMonthlyDataForLembaga(currentName, currentData ? currentData._no : null);
+    var yearData = mDataByYear[year];
+
+    if (!yearData) {
+        wrap.innerHTML = '<div class="inline-monthly-empty">' +
+            '<i class="bx bx-info-circle"></i> Data rincian perkembangan per bulan belum tersedia untuk tahun ' + year + '.</div>';
+        return;
+    }
+
+    var months = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGT','SEP','OKT','NOV','DES'];
+    var values = months.map(function(m) { return yearData[m] || 0; });
+    var yearTotal = values.reduce(function(a, b) { return a + b; }, 0);
+
+    var html = '<div class="inline-monthly-header">' +
+        '<div class="inline-monthly-title"><i class="bx bx-bar-chart-alt-2"></i> Detail Perkembangan Bulanan Tahun ' + year + '</div>' +
+        '<div class="badge-year-total"><i class="bx bx-calendar-star"></i> Penerimaan ' + year + ': <strong>' + formatRpFull(yearTotal) + '</strong></div>' +
+    '</div>' +
+    '<div class="inline-chart-container"><canvas id="chart-year-' + year + '"></canvas></div>';
+
+    wrap.innerHTML = html;
+
+    var canvas = document.getElementById('chart-year-' + year);
     if (!canvas) return;
 
-    if (currentMonthlyChart) {
-        currentMonthlyChart.destroy();
-        currentMonthlyChart = null;
+    if (inlineChartInstances[year]) {
+        inlineChartInstances[year].destroy();
+        delete inlineChartInstances[year];
     }
 
     var ctx = canvas.getContext('2d');
-    currentMonthlyChart = new Chart(ctx, {
+    inlineChartInstances[year] = new Chart(ctx, {
         type: 'line',
         data: {
             labels: months,
             datasets: [{
-                label: 'Wakaf ' + currentMonthlyYear,
+                label: 'Perkembangan ' + year,
                 data: values,
                 backgroundColor: 'rgba(42, 157, 143, 0.15)',
                 borderColor: '#2a9d8f',
@@ -2833,7 +2800,7 @@ function showMonthlyChart(year) {
                 tooltip: {
                     callbacks: {
                         title: function(items) {
-                            return items[0].label + ' ' + currentMonthlyYear;
+                            return items[0].label + ' ' + year;
                         },
                         label: function(ctx) {
                             return ' Perolehan: ' + formatRpFull(ctx.raw);
@@ -2864,14 +2831,6 @@ function showMonthlyChart(year) {
     });
 }
 
-function selectMonthlyFromTable(year) {
-    showMonthlyChart(year);
-    var el = document.getElementById('monthly-section');
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
 // ── Render Table with Pagination ──────────────────────────────
 function renderTable() {
     var trx = currentData.transaksi;
@@ -2889,29 +2848,34 @@ function renderTable() {
 
     if (slice.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aab;padding:20px;">Belum ada data transaksi</td></tr>';
-    } else {
-        var html = '';
-        slice.forEach(function(t, idx) {
-            var displayYear = (t.tgl || '').split(/[-\/]/).pop() || t.tgl || '-';
-            var hasMonthly = isYearMonthlyAvailable(displayYear);
-            var yearBadgeHtml = '';
-            if (hasMonthly) {
-                var isActiveYear = (currentMonthlyYear === displayYear);
-                yearBadgeHtml = '<span class="tgl-badge tgl-badge-clickable' + (isActiveYear ? ' active-row' : '') + '" onclick="selectMonthlyFromTable(\'' + displayYear + '\')" title="Klik untuk melihat grafik rincian bulanan tahun ' + displayYear + '">' +
-                    displayYear + ' <i class="bx bx-line-chart" style="font-size:0.8rem;margin-left:3px;vertical-align:middle;"></i></span>';
-            } else {
-                yearBadgeHtml = '<span class="tgl-badge">' + displayYear + '</span>';
-            }
-
-            html += '<tr>' +
-                '<td>' + (start + idx + 1) + '</td>' +
-                '<td>' + yearBadgeHtml + '</td>' +
-                '<td>' + (t.nama || '-') + '</td>' +
-                '<td>' + formatRpFull(t.cumulative || t.nominal) + '</td>' +
-            '</tr>';
-        });
-        tbody.innerHTML = html;
+        return;
     }
+
+    var html = '';
+    slice.forEach(function(t, idx) {
+        var displayYear = (t.tgl || '').split(/[-\/]/).pop() || t.tgl || '-';
+        var hasMonthly = isYearMonthlyAvailable(displayYear);
+        var isOpen = openedYears.has(displayYear);
+
+        html += '<tr class="trx-row' + (hasMonthly ? ' has-monthly' : '') + (isOpen ? ' open' : '') + '" onclick="toggleYearMonthly(\'' + displayYear + '\')" id="trx-row-' + displayYear + '" title="' + (hasMonthly ? 'Klik untuk membuka/menutup grafik bulanan tahun ' + displayYear : '') + '">' +
+            '<td>' + (start + idx + 1) + '</td>' +
+            '<td><span class="tgl-badge' + (hasMonthly ? ' has-monthly' : '') + '">' + displayYear + (hasMonthly ? ' <i class="bx bx-chevron-down row-toggle-icon"></i>' : '') + '</span></td>' +
+            '<td>' + (t.nama || '-') + '</td>' +
+            '<td>' + formatRpFull(t.cumulative || t.nominal) + '</td>' +
+        '</tr>' +
+        '<tr class="trx-detail-row" id="detail-row-' + displayYear + '" style="' + (isOpen ? '' : 'display:none;') + '">' +
+            '<td colspan="4" style="padding:0;">' +
+                '<div class="inline-monthly-wrap" id="inline-monthly-' + displayYear + '"></div>' +
+            '</td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html;
+
+    // Render grafik bulanan untuk baris yang terbuka
+    openedYears.forEach(function(y) {
+        renderInlineMonthlyChart(y);
+    });
 
     // Pagination
     var pgWrap = document.getElementById('pagination-wrap');
