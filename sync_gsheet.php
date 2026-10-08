@@ -29,8 +29,8 @@ echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sync GSheet</title
 echo '<style>body{background:#0f172a;color:#e2e8f0;font-family:monospace;padding:20px}';
 echo 'h2{color:#60a5fa;font-family:sans-serif}pre{background:#1e293b;border:1px solid #334155;';
 echo 'border-radius:8px;padding:16px;max-width:900px;white-space:pre-wrap}';
-echo '.ok{color:#4ade80}.err{color:#f87171}.warn{color:#facc15}.info{color:#94a3b8}.head{color:#93c5fd;font-weight:bold}';
-echo '</style></head><body><h2>Sync Google Sheets &rarr; MySQL | MAAL PPMAWAR</h2><pre>';
+echo '</style></head><body><h2>Sync Google Sheets &rarr; MySQL | MAAL PPMAWAR</h2>';
+echo '<p style="color:#38bdf8;font-weight:bold">DIAGNOSTIC PATH: ' . __DIR__ . '</p><pre>';
 
 function pr($msg, $cls = 'info') {
     echo '<span class="' . $cls . '">' . htmlspecialchars($msg, ENT_QUOTES, 'UTF-8') . '</span>' . "\n";
