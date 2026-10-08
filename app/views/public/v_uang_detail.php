@@ -241,6 +241,7 @@ $jumlah    = count($akun_list);
         @media (max-width: 576px) {
             .control-btns { justify-content: center; width: 100%; }
             .control-btns button, .control-btns a { flex: 1; justify-content: center; text-align: center; }
+            #btn-laporan { flex: 1 1 100% !important; }
             .result-count { text-align: center; width: 100%; margin-bottom: 8px; }
             .va-bar { flex-direction: column; align-items: flex-start; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
             .va-bar:last-child { padding-bottom: 0; border-bottom: none; }
@@ -266,8 +267,8 @@ $jumlah    = count($akun_list);
                     <button id="btn-sync-all" onclick="syncAllData()" style="display:flex; align-items:center; gap:8px; padding:9px 20px; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; border:2px solid #e9c46a; background:#e9c46a; color:#1a2d4f; transition:all .2s; font-family:'Poppins',sans-serif;">
                         <i class='bx bx-sync'></i> Sinkronisasi Data Manual
                     </button>
-                    <a href="https://laporan.maal.ppmawar.or.id" target="_blank" style="display:flex; align-items:center; gap:8px; padding:9px 20px; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; border:2px solid #2a9d8f; background:#2a9d8f; color:#fff; transition:all .2s; font-family:'Poppins',sans-serif; text-decoration:none;">
-                        <i class='bx bx-file-find'></i> Laporan per Lembaga
+                    <a id="btn-laporan" class="btn-global" href="https://laporan.maal.ppmawar.or.id" target="_blank" style="text-decoration:none;">
+                        <i class='bx bx-search-alt-2'></i> Cek Laporan per Lembaga
                     </a>
                     <a class="btn-back" href="/"><i class='bx bx-arrow-back'></i> Kembali</a>
                 </div>
