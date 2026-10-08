@@ -37,27 +37,3 @@ jobs:
             cache_rat.json
             test.csv
             test2024.csv
-
-  deploy-subdomain:
-    name: 📊 Deploy Subdomain Laporan
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🚚 Get latest code
-        uses: actions/checkout@v4
-
-      - name: 📂 Sync Subdomain via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          # Gunakan akun FTP khusus subdomain laporan
-          username: ${{ secrets.FTP_LAPORAN_USERNAME }}
-          password: ${{ secrets.FTP_LAPORAN_PASSWORD }}
-          # Hanya upload isi dari folder laporan_maal
-          local-dir: ./laporan_maal/
-          # Root FTP github@laporan.maal.ppmawar.or.id sudah = root subdomain
-          server-dir: ./
-          # Force re-upload setiap push
-          dangerous-clean-slate: true
-          exclude: |
-            **/.git*
-            **/.git*/**

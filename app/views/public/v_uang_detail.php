@@ -3,7 +3,7 @@ $GLOBALS['akun_json_data'] = $akun_json_data = null;
 // ============================================================
 // DATA STATIS FALLBACK — tampil langsung, diperbarui oleh JS
 // jika Google Apps Script berhasil diakses dari browser
-// Data diperbarui: April 2026 (95 akun)
+// Data diperbarui: Oktober 2026
 // ============================================================
 $akun_list = [
     ['no'=>1,  'nama'=>'Wakaf PPMA',                                      'icon'=>'bx-home-heart',    'data'=>['2020'=>397154884,'2021'=>657312884,'2022'=>1000000000,'2023'=>1094000000,'2024'=>1197911000,'2025'=>1208311000,'2026'=>2268511000]],
