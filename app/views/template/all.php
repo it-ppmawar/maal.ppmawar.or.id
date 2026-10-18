@@ -29,6 +29,32 @@
     <style>
         canvas { min-height: 250px !important; width: 100% !important; }
 
+        /* ── Badge Info Rata-rata ── */
+        .badge-avg {
+            display: inline-flex;
+            align-items: center;
+            background: #ffffff;
+            color: #495057;
+            border: 1px solid #dce2e6;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            box-shadow: 0 2px 6px rgba(55, 81, 126, 0.08);
+            transition: all 0.25s ease;
+            cursor: default;
+        }
+        .badge-avg:hover {
+            box-shadow: 0 4px 10px rgba(55, 81, 126, 0.15);
+            transform: translateY(-1px);
+        }
+        .badge-avg strong {
+            margin-left: 4px;
+            margin-right: 2px;
+            color: #37517e;
+            font-weight: 700;
+        }
+
         /* ── Tombol Unit Tamwil ── */
         .nav-menu li.btn-tamwil { margin-left: 3px; }
         .nav-menu li.btn-tamwil a {
@@ -149,19 +175,23 @@
             <!-- Grafik Ringkas (ditampilkan langsung) -->
             <div class="container-fluid" style="margin-bottom: 30px;">
                 <div class="row">
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-4 mb-4 text-center">
                         <canvas id="uang"></canvas>
+                        <div id="badge-uang" class="mt-2"></div>
                     </div>
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-4 mb-4 text-center">
                         <canvas id="grafik_hasil"></canvas>
+                        <div id="badge-grafik_hasil" class="mt-2"></div>
                     </div>
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-4 mb-4 text-center">
                         <canvas id="grafik_penyaluran"></canvas>
+                        <div id="badge-grafik_penyaluran" class="mt-2"></div>
                     </div>
                 </div>
                 <div class="row justify-content-center">
-                    <div class="col-md-6 mb-4">
+                    <div class="col-md-6 mb-4 text-center">
                         <canvas id="basmalah"></canvas>
+                        <div id="badge-basmalah" class="mt-2"></div>
                     </div>
                 </div>
             </div>
@@ -272,17 +302,18 @@ $(document).ready(function() {
     // Fungsi format angka rupiah singkat
     function formatRupiah(value) {
         var abs = Math.abs(value);
+        var sign = value < 0 ? '-' : '';
         if (abs >= 1000000000) {
-            var result = (value / 1000000000);
-            return 'Rp.' + (result % 1 === 0 ? result : result.toFixed(1)) + ' M';
+            var result = (abs / 1000000000);
+            return 'Rp. ' + sign + (result % 1 === 0 ? result : result.toFixed(1).replace('.', ',')) + ' M';
         } else if (abs >= 1000000) {
-            var result = (value / 1000000);
-            return 'Rp.' + (result % 1 === 0 ? result : result.toFixed(1)) + ' JT';
+            var result = (abs / 1000000);
+            return 'Rp. ' + sign + (result % 1 === 0 ? result : result.toFixed(1).replace('.', ',')) + ' JT';
         } else if (abs >= 1000) {
-            var result = (value / 1000);
-            return 'Rp.' + (result % 1 === 0 ? result : result.toFixed(1)) + ' RB';
+            var result = (abs / 1000);
+            return 'Rp. ' + sign + (result % 1 === 0 ? result : result.toFixed(1).replace('.', ',')) + ' RB';
         } else {
-            return 'Rp.' + value;
+            return 'Rp. ' + sign + abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
     }
 
@@ -304,32 +335,85 @@ $(document).ready(function() {
 
         if (filteredLabels.length === 0) return;
 
+        // Hitung rata-rata
+        var sum = filteredValues.reduce(function(a, b) { return a + b; }, 0);
+        var avg = sum / filteredValues.length;
+
+        var avgBrief = (unit === 'Rp') ? formatRupiah(avg) : (avg.toFixed(2).replace('.', ',') + '%');
+        var avgFull = (unit === 'Rp') 
+            ? ('Rp. ' + Math.round(avg).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")) 
+            : (avg.toFixed(2).replace('.', ',') + '%');
+
+        // Tampilkan badge info rata-rata di bawah canvas
+        var badgeContainer = document.getElementById('badge-' + id);
+        if (!badgeContainer) {
+            badgeContainer = document.createElement('div');
+            badgeContainer.id = 'badge-' + id;
+            badgeContainer.className = 'text-center mt-2';
+            el.parentNode.insertBefore(badgeContainer, el.nextSibling);
+        }
+        badgeContainer.innerHTML = '<span class="badge-avg" title="Rata-rata: ' + avgFull + '">' +
+            '<i class="bx bx-line-chart mr-1" style="color: #e74c3c; font-size: 1.05rem; vertical-align: -1px;"></i>' +
+            'Rata-rata: <strong>' + avgBrief + '</strong> / tahun' +
+            '</span>';
+
         var ctx = el.getContext('2d');
         new Chart(ctx, {
             type: chartType,
             data: {
                 labels: filteredLabels,
-                datasets: [{
-                    label: label,
-                    backgroundColor: chartType === 'line' ? 'rgba(55, 81, 126, 0.2)' : color,
-                    borderColor: color,
-                    borderWidth: chartType === 'line' ? 3 : 1,
-                    pointRadius: chartType === 'line' ? 4 : 0,
-                    data: filteredValues,
-                    fill: chartType === 'line'
-                }]
+                datasets: [
+                    {
+                        label: label,
+                        backgroundColor: chartType === 'line' ? 'rgba(55, 81, 126, 0.2)' : color,
+                        borderColor: color,
+                        borderWidth: chartType === 'line' ? 3 : 1,
+                        pointRadius: chartType === 'line' ? 4 : 0,
+                        pointHoverRadius: 6,
+                        data: filteredValues,
+                        fill: chartType === 'line'
+                    },
+                    {
+                        label: 'Rata-rata: ' + avgBrief,
+                        data: Array(filteredValues.length).fill(avg),
+                        borderColor: '#e74c3c',
+                        borderWidth: 2,
+                        borderDash: [6, 5],
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointBackgroundColor: '#e74c3c',
+                        fill: false,
+                        isAverage: true
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                legend: {
+                    display: true,
+                    labels: {
+                        boxWidth: 28,
+                        fontSize: 11,
+                        padding: 10
+                    }
+                },
                 tooltips: {
                     callbacks: {
-                        label: function(tooltipItem, data) {
+                        label: function(tooltipItem, chartData) {
+                            var dataset = chartData.datasets[tooltipItem.datasetIndex];
                             var value = tooltipItem.yLabel;
-                            if (unit === 'Rp') {
-                                return label + ': Rp.' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            if (dataset && dataset.isAverage) {
+                                if (unit === 'Rp') {
+                                    return 'Rata-rata: Rp. ' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                }
+                                return 'Rata-rata: ' + value.toFixed(2).replace('.', ',') + '%';
                             }
-                            return label + ': ' + value + '%';
+                            var dsLabel = (dataset && dataset.label) ? dataset.label : label;
+                            if (unit === 'Rp') {
+                                return dsLabel + ': Rp. ' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            }
+                            return dsLabel + ': ' + value + '%';
                         }
                     }
                 },
