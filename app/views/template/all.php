@@ -27,7 +27,11 @@
     <!-- Template Main CSS File -->
     <link href="<?= BASEURL; ?>/public/arsha/css/style.css" rel="stylesheet">
     <style>
-        canvas { min-height: 250px !important; width: 100% !important; }
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
 
         /* ── Badge Info Rata-rata ── */
         .badge-avg {
@@ -176,21 +180,29 @@
             <div class="container-fluid" style="margin-bottom: 30px;">
                 <div class="row">
                     <div class="col-md-4 mb-4 text-center">
-                        <canvas id="uang"></canvas>
+                        <div class="chart-container">
+                            <canvas id="uang"></canvas>
+                        </div>
                         <div id="badge-uang" class="mt-2"></div>
                     </div>
                     <div class="col-md-4 mb-4 text-center">
-                        <canvas id="grafik_hasil"></canvas>
+                        <div class="chart-container">
+                            <canvas id="grafik_hasil"></canvas>
+                        </div>
                         <div id="badge-grafik_hasil" class="mt-2"></div>
                     </div>
                     <div class="col-md-4 mb-4 text-center">
-                        <canvas id="grafik_penyaluran"></canvas>
+                        <div class="chart-container">
+                            <canvas id="grafik_penyaluran"></canvas>
+                        </div>
                         <div id="badge-grafik_penyaluran" class="mt-2"></div>
                     </div>
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-md-6 mb-4 text-center">
-                        <canvas id="basmalah"></canvas>
+                        <div class="chart-container">
+                            <canvas id="basmalah"></canvas>
+                        </div>
                         <div id="badge-basmalah" class="mt-2"></div>
                     </div>
                 </div>
@@ -350,7 +362,12 @@ $(document).ready(function() {
             badgeContainer = document.createElement('div');
             badgeContainer.id = 'badge-' + id;
             badgeContainer.className = 'text-center mt-2';
-            el.parentNode.insertBefore(badgeContainer, el.nextSibling);
+            var wrap = el.closest ? el.closest('.chart-container') : null;
+            if (wrap) {
+                wrap.parentNode.insertBefore(badgeContainer, wrap.nextSibling);
+            } else {
+                el.parentNode.insertBefore(badgeContainer, el.nextSibling);
+            }
         }
         badgeContainer.innerHTML = '<span class="badge-avg" title="Rata-rata: ' + avgFull + '">' +
             '<i class="bx bx-line-chart mr-1" style="color: #e74c3c; font-size: 1.05rem; vertical-align: -1px;"></i>' +
@@ -374,11 +391,12 @@ $(document).ready(function() {
                         fill: chartType === 'line'
                     },
                     {
-                        label: 'Rata-rata: ' + avgBrief,
+                        label: 'Rata-rata (' + avgBrief + ')',
                         data: Array(filteredValues.length).fill(avg),
                         borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0)',
                         borderWidth: 2,
-                        borderDash: [6, 5],
+                        borderDash: [6, 4],
                         pointRadius: 0,
                         pointHoverRadius: 4,
                         pointBackgroundColor: '#e74c3c',

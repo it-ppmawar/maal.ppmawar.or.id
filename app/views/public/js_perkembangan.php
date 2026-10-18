@@ -105,11 +105,12 @@ $(document).ready(function() {
                         fill: chartType === 'line'
                     },
                     {
-                        label: 'Rata-rata: ' + avgBrief,
+                        label: 'Rata-rata (' + avgBrief + ')',
                         data: Array(filteredValues.length).fill(avg),
                         borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0)',
                         borderWidth: 2,
-                        borderDash: [6, 5],
+                        borderDash: [6, 4],
                         pointRadius: 0,
                         pointHoverRadius: 4,
                         pointBackgroundColor: '#e74c3c',
